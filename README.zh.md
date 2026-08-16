@@ -1,6 +1,6 @@
 # Harness.app
 
-**[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（`dsh`）的原生 macOS 启动器 —— 约 700 行 Objective-C，没有 Electron，不内置 dsh 副本，没有托盘常驻进程。**
+**[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（`dsh`）的原生 macOS 启动器 —— 约 1200 行 Objective-C，没有 Electron，不内置 dsh 副本，没有托盘常驻进程。**
 
 双击 → 启动*你自己安装的* `dsh web` → 在原生窗口中显示官方界面 → 关闭窗口即停止服务。
 
@@ -15,8 +15,8 @@ dsh 发布几天内出现了九个"桌面版"封装 —— Electron/Tauri 应用
 | | Harness.app | 常见封装 |
 |---|---|---|
 | 运行哪个 dsh | **你用 npm 安装的那个。** 上游出新 RC = 一条命令；应用本身无需更新 | 包内锁定的副本；等作者发版 |
-| 体积 / 技术栈 | 约 100 KB 二进制，AppKit + 系统 WebKit，一条 `clang` 命令 | 300–500 MB Electron/Tauri，内置 Chromium 或 Rust 工具链 |
-| 信任 | 五分钟读完全部代码；`brew` 在*你的*机器上编译 | 陌生人提供的（可能未公证的）二进制 |
+| 体积 / 技术栈 | 不到 400 KB 的通用二进制，AppKit + 系统 WebKit，一条 `clang` 命令 | 300–500 MB Electron/Tauri，内置 Chromium 或 Rust 工具链 |
+| 信任 | 半小时读完全部代码；`brew` 在*你的*机器上编译 | 陌生人提供的（可能未公证的）二进制 |
 | 关闭窗口 | **停止服务**（可选保持运行；无托盘、无常驻） | 隐藏到托盘；服务继续运行 |
 | 网络 | localhost + 两个明示、可关闭的版本检查 | 更新服务器，有时还有计数下载端点 |
 | dsh 的插件自我修改能力 | 完全不受影响 —— 同一个 `~/.dsh`，同样的 profile，你的登录 shell PATH | 常常叠加一个自定义 profile |
@@ -95,7 +95,7 @@ make test       # 单元测试（环境发现、semver、用假 dsh 测服务生
 make smoke      # 端到端：冷启动、接管、保持运行、SIGKILL 升级
 make install    # 复制到 /Applications（ad-hoc 签名）
 ```
-只需要 Command Line Tools。有意不提供公证下载：本地编译的应用没有隔离标记，而一个 100 KB 的启动器也不值得让你去信任一个二进制。
+只需要 Command Line Tools。有意不提供公证下载：本地编译的应用没有隔离标记，而一个 400 KB 的启动器也不值得让你去信任一个二进制。
 
 ## 路线图 / 非目标
 

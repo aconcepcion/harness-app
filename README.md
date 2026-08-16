@@ -1,6 +1,6 @@
 # Harness.app
 
-**A native macOS launcher for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`) — ~700 lines of Objective-C, no Electron, no bundled copy of dsh, no tray daemon.**
+**A native macOS launcher for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`) — ~1,200 lines of Objective-C, no Electron, no bundled copy of dsh, no tray daemon.**
 
 Double-click → it starts *your* `dsh web` → shows the official UI in a native window → stops the server when you close it.
 
@@ -15,8 +15,8 @@ Within days of dsh's release there were nine "desktop" wrappers — Electron and
 | | Harness.app | Typical wrapper |
 |---|---|---|
 | Which dsh runs | **The one you installed with npm.** New upstream RC = one command; the app never needs updating | A pinned copy inside the bundle; you wait for their release |
-| Size / stack | ~100 KB binary, AppKit + the system WebKit, one `clang` command | 300–500 MB Electron/Tauri, bundled Chromium or Rust toolchain |
-| Trust | Read all of it in five minutes; `brew` compiles it on *your* machine | A notarized (or not) binary from a stranger |
+| Size / stack | <400 KB universal binary, AppKit + the system WebKit, one `clang` command | 300–500 MB Electron/Tauri, bundled Chromium or Rust toolchain |
+| Trust | Read all of it in half an hour; `brew` compiles it on *your* machine | A notarized (or not) binary from a stranger |
 | Close the window | **Stops the server** (opt-in keep-alive; no tray, no daemon) | Hides to a tray; server keeps running |
 | Network | localhost + two disclosed, off-able version checks | Update servers, sometimes counted-download endpoints |
 | dsh's plugin self-modification | Untouched — same `~/.dsh`, same profiles, your login-shell PATH | Often a custom profile layered on top |
@@ -95,7 +95,7 @@ make test       # unit tests (env discovery, semver, server lifecycle with a fak
 make smoke      # end-to-end: cold start, attach, keep-alive, SIGKILL escalation
 make install    # copy to /Applications (ad-hoc signed)
 ```
-Only Command Line Tools are needed. There is no notarized download on purpose: a locally built app has no quarantine flag, and nothing about a 100 KB launcher justifies asking you to trust a binary.
+Only Command Line Tools are needed. There is no notarized download on purpose: a locally built app has no quarantine flag, and nothing about a 400 KB launcher justifies asking you to trust a binary.
 
 ## Roadmap / non-goals
 
