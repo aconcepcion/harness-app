@@ -1,0 +1,8 @@
+# Harness.app
+> Native macOS launcher for DeepSeek Harness (dsh). Runs the user's own npm-installed dsh in a native window; stops it on close. ~1,200 lines of Objective-C, no Electron, no bundled dsh, no tray.
+
+- Install & operate (agent-ready, step by step with verification): https://github.com/aconcepcion/harness-app#for-ai-agents
+- Human README (why it exists, settings, privacy, gotchas): https://github.com/aconcepcion/harness-app#readme
+- Contributing conventions: https://github.com/aconcepcion/harness-app/blob/main/AGENTS.md
+- Homebrew: `brew install aconcepcion/tap/harness-app`
+- Requires: macOS 13+, Xcode Command Line Tools; dsh via npm (Harness guides the install if missing)

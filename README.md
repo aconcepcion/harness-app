@@ -1,16 +1,22 @@
 # Harness.app
 
-**A native macOS launcher for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`) — ~1,200 lines of Objective-C, no Electron, no bundled copy of dsh, no tray daemon.**
+**A native macOS launcher for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`). Runs the dsh *you* installed, in a real Mac window, and stops it when you close the window. ~1,200 lines of Objective-C. No Electron, no bundled copy of dsh, no tray daemon.**
 
 Double-click → it starts *your* `dsh web` → shows the official UI in a native window → stops the server when you close it.
 
 > Unofficial community project. Not affiliated with DeepSeek. `dsh` is theirs; this is just a window and a process manager.
 
-[中文](README.zh.md)
+[中文](README.zh.md) · [For AI agents ↓](#for-ai-agents) · [Install ↓](#install)
 
-## Why this exists
+## Why I built this
 
-Within days of dsh's release there were nine "desktop" wrappers — Electron and Tauri apps that ship **their own pinned copy** of dsh, hide to a tray on close, and ask you to trust a 300–500 MB third-party binary with your API key and shell. Harness.app takes the opposite stance on every one of those:
+I installed dsh the day it came out. It's excellent, and it's a terminal command that opens a browser tab. That's fine for an hour and annoying for a week: the tab gets lost among fifty others, the server keeps running in a terminal you forgot about, and you can't just click a Dock icon like every other app you use all day.
+
+So I wrote a small native launcher for myself. Then I looked at what everyone else had done, because within three days there were *nine* "DeepSeek Harness Desktop" repos. Almost all of them make the same choices: wrap the web UI in Electron or Tauri, **ship their own copy of dsh inside the app**, hide to the menu-bar tray when you close the window, and hand you a 300–500 MB binary to install. The most polished one is genuinely good work — but it's a *product*, with its own release schedule, its own update servers, and its own copy of dsh that lags upstream.
+
+That's backwards for a tool that is changing weekly. dsh is a developer preview. New release candidates land constantly, and one of dsh's best features is that **it can modify itself** — ask it to support a file type it doesn't handle and it installs the plugin into its own profile. A wrapper that pins its own dsh, or layers its own profile on top, gets in the way of exactly that.
+
+Harness.app takes the opposite stance on every point, on purpose:
 
 | | Harness.app | Typical wrapper |
 |---|---|---|
@@ -22,6 +28,14 @@ Within days of dsh's release there were nine "desktop" wrappers — Electron and
 | dsh's plugin self-modification | Untouched — same `~/.dsh`, same profiles, your login-shell PATH | Often a custom profile layered on top |
 
 If you want a tray app with a plugin marketplace, use one of the others — they're good at that. If you want your own dsh in a native window that behaves like a document, this is it.
+
+## Why those things are good (if you're not a Mac developer)
+
+- **"Runs your own npm dsh"** — dsh is installed by npm, Node's package manager. Harness doesn't carry a copy; it launches the one on your machine. So when DeepSeek ships a new version, you type one command and you're on it — Harness never has to release anything. You are never waiting on a middleman.
+- **"~1,200 lines of Objective-C, no Electron"** — Electron apps bundle an entire Chrome browser to draw their window (that's why they're 300–500 MB and use a lot of memory). Harness uses the browser engine already built into macOS, through Apple's own AppKit. Result: a sub-400 KB app that opens in about a second, feels native, and is small enough that a curious person can read *all* of it — there is nowhere for anything sneaky to hide. Homebrew even compiles it from source on your own Mac.
+- **"No tray, no daemon"** — many desktop wrappers keep running in the menu bar after you close the window, with the server still going. Harness behaves like a document: close the window, it's gone, nothing left running. (If you *want* the server to stay up between sessions, there's a checkbox for that — off by default.)
+- **"Two disclosed, off-able version checks"** — the only network traffic besides talking to dsh on your own machine is a version lookup on npm (for dsh) and on GitHub (for Harness). Both are visible in Settings and can be switched off. No telemetry, no phone-home.
+- **"Never constrains dsh"** — the app doesn't put itself between you and dsh's plugin system. Your `~/.dsh`, your profiles, your PATH. Whatever dsh can do from the terminal, it can do inside Harness.
 
 ## Install
 
@@ -42,6 +56,59 @@ Requirements: macOS 13+, Xcode Command Line Tools (`xcode-select --install`), an
 2. If dsh is missing, or Node is the wrong version, or dsh's shell tools are broken (see Gotchas), it tells you exactly what to run — visibly, in Terminal. Nothing runs hidden.
 3. The official dsh web UI loads. Enter your API key in Settings → Models as usual.
 4. Close the window: the server it started stops. (Turn on **Server ▸ Keep Server Running After Close** if you'd rather it stayed; the next launch reattaches instantly.)
+
+## For AI agents
+
+If you are an AI agent (Claude Code, Codex, Cursor, Copilot, Hermes, dsh itself…) asked to install or operate Harness.app on a Mac, follow this section literally. Every step has a verifiable outcome.
+
+**Preconditions (check, don't assume)**
+```sh
+sw_vers -productVersion            # need 13.0 or newer
+xcode-select -p                    # must print a path; else: xcode-select --install
+which brew                         # optional; enables the one-line install
+which dsh && dsh --version         # optional; Harness will guide the user if missing
+node --version                     # dsh needs ^22.19.0 || >=24.0.0 (23.x is NOT supported)
+```
+
+**Install (choose one)**
+```sh
+# A. Homebrew tap — builds locally, no Gatekeeper prompt
+brew install aconcepcion/tap/harness-app && cp -R "$(brew --prefix)/opt/harness-app/Harness.app" /Applications/
+# B. From source
+git clone https://github.com/aconcepcion/harness-app ~/harness-app && make -C ~/harness-app install
+```
+
+**Verify**
+```sh
+/Applications/Harness.app/Contents/MacOS/Harness --version      # prints 3.0.0
+/Applications/Harness.app/Contents/MacOS/Harness --check-env     # exit 0 = dsh found; exit 1 = dsh missing (report shows why)
+open -a Harness                                                  # launches; UI on http://127.0.0.1:3080 within ~5 s
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3080/  # 200 when ready
+```
+
+**If `--check-env` reports `dsh: not found`, install dsh (this exact command; the `--allow-scripts` part is mandatory with npm ≥ 11):**
+```sh
+npm install -g --allow-scripts=@deepseek-ai/dsh-subprocess-local,koffi,node-pty,@google/genai,protobufjs @deepseek-ai/dsh@latest
+```
+If it reports `node-pty: BROKEN`, run the same command (it repairs the missing macOS prebuild).
+
+**Configure (all optional; take effect on Server ▸ Restart Server or next launch)**
+```sh
+defaults write com.arnoldoconcepcion.harness-app Port -int 3080
+defaults write com.arnoldoconcepcion.harness-app Workspace "$HOME/projects"
+defaults write com.arnoldoconcepcion.harness-app KeepServerRunning -bool NO
+defaults write com.arnoldoconcepcion.harness-app CheckForDshUpdates -bool YES
+defaults write com.arnoldoconcepcion.harness-app CheckForAppUpdates -bool YES
+open -a Harness "$HOME/projects"        # or: launch with a workspace folder
+```
+
+**Operate / diagnose**
+- Log: `~/Library/Logs/Harness.app/harness-app.log` (Harness lines are prefixed `[harness-app …]`; dsh's own output follows).
+- Quit = `osascript -e 'quit app "Harness"'` or SIGTERM to the `Harness` process; the dsh server it spawned stops with it unless `KeepServerRunning` is YES.
+- Harness never modifies `~/.dsh`, never installs its own profile, and passes the user's login-shell environment (`$SHELL -ilc env`) to dsh. Anything dsh can do from a terminal, it can do here.
+- Uninstall: `rm -rf /Applications/Harness.app; defaults delete com.arnoldoconcepcion.harness-app` (and `brew uninstall harness-app` if installed via tap). dsh itself is untouched.
+
+Contributing agents: see [`AGENTS.md`](AGENTS.md) for build, test and code conventions.
 
 ## What it actually does
 
@@ -104,4 +171,4 @@ Only Command Line Tools are needed. There is no notarized download on purpose: a
 
 ## License
 
-MIT © Arnoldo Concepcion. Whale emoji icon; DeepSeek's name and logo belong to DeepSeek.
+MIT © Arnoldo Concepcion. DeepSeek's name and logo belong to DeepSeek.

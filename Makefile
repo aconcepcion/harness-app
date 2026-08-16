@@ -20,7 +20,7 @@ $(BUILD)/$(APP): $(SRC) $(HDR) | $(BUILD)
 $(BUILD)/icontool: src/icon.m | $(BUILD)
 	clang -fobjc-arc -O2 -o $@ src/icon.m -framework AppKit
 
-$(BUILD)/AppIcon.icns: $(BUILD)/icontool scripts/make-icon.sh
+$(BUILD)/AppIcon.icns: $(BUILD)/icontool scripts/make-icon.sh $(wildcard Resources/AppIcon-1024.png)
 	scripts/make-icon.sh $(BUILD)/icontool $@
 
 $(APPDIR): $(BUILD)/$(APP) $(BUILD)/AppIcon.icns Resources/Info.plist.in
