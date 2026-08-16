@@ -4,6 +4,7 @@
 #import "HAEnvironment.h"
 #import "HAServer.h"
 #import "HAUpdater.h"
+#import "HAPreferencesWindow.h"
 
 @interface AppDelegate : NSObject <NSApplicationDelegate, NSWindowDelegate, WKUIDelegate, WKNavigationDelegate, HAServerDelegate, NSMenuDelegate>
 @property (strong) NSWindow *window;
@@ -277,10 +278,62 @@
 }
 - (void)updateDsh:(id)sender { [self runInstallCommandWithTitle:@"Updating dsh in Terminal…"]; }
 - (void)repairShellTools:(id)sender { [self runInstallCommandWithTitle:@"Repairing dsh in Terminal…"]; }
-- (void)showPreferences:(id)sender { /* wired in Task 6 */ }
-- (void)showAbout:(id)sender { /* wired in Task 6 */ }
-- (void)selectProfile:(NSMenuItem *)sender { /* wired in Task 6 */ }
-- (void)menuNeedsUpdate:(NSMenu *)menu { /* wired in Task 6 */ }
+- (void)showPreferences:(id)sender {
+    if (!self.preferencesController) {
+        __weak typeof(self) weakSelf = self;
+        self.preferencesController = [[HAPreferencesWindowController alloc] initWithOpenLog:^{ [weakSelf openLog:nil]; }];
+    }
+    [self.preferencesController showWindow:nil];
+    [self.preferencesController.window makeKeyAndOrderFront:nil];
+}
+
+- (void)showAbout:(id)sender {
+    NSString *mode = @[@"not started", @"attached to an existing server", @"started by Harness"][self.server.mode];
+    NSString *credits = [NSString stringWithFormat:
+        @"Native macOS launcher for DeepSeek Harness (unofficial).\n\n"
+        @"dsh: %@ (%@)\nServer: %@ — %@\nProfile: %@\nWorkspace: %@\nLog: %@\n\nMIT License · github.com/%@",
+        self.env.dshVersion ?: @"not found", self.env.dshPath ?: @"—",
+        self.server ? self.server.baseURL.absoluteString : @"—", mode,
+        self.server.profile ?: @"—", self.server ? self.server.workspace : [self effectiveWorkspace], HALogPath(), HAGitHubRepo];
+    NSAttributedString *att = [[NSAttributedString alloc] initWithString:credits attributes:@{NSFontAttributeName: [NSFont systemFontOfSize:11]}];
+    [NSApp orderFrontStandardAboutPanelWithOptions:@{NSAboutPanelOptionCredits: att, NSAboutPanelOptionApplicationName: @"Harness",
+                                                     NSAboutPanelOptionApplicationVersion: HAAppVersion, NSAboutPanelOptionVersion: @""}];
+}
+
+- (void)menuNeedsUpdate:(NSMenu *)menu {
+    if (menu != self.profileMenu) return;
+    [menu removeAllItems];
+    NSString *current = [[NSUserDefaults standardUserDefaults] stringForKey:HAPrefProfile] ?: HADefaultProfile;
+    for (NSString *name in HAAvailableProfiles(self.env.shellEnvironment)) {
+        NSMenuItem *it = [[NSMenuItem alloc] initWithTitle:name action:@selector(selectProfile:) keyEquivalent:@""];
+        it.state = [name isEqualToString:current] ? NSControlStateValueOn : NSControlStateValueOff;
+        [menu addItem:it];
+    }
+}
+
+- (void)selectProfile:(NSMenuItem *)sender {
+    NSString *current = [[NSUserDefaults standardUserDefaults] stringForKey:HAPrefProfile] ?: HADefaultProfile;
+    if ([sender.title isEqualToString:current]) return;
+    if (self.server.mode == HAServerModeAttached) {
+        [[NSUserDefaults standardUserDefaults] setObject:sender.title forKey:HAPrefProfile];
+        [self presentSheetTitle:@"Profile saved" detail:@"Harness is attached to a server it did not start, so the running profile is unchanged. Stop that server (or turn off Keep Server Running) and restart to use the new profile." buttons:@[@"OK"] handler:nil];
+        return;
+    }
+    [self replaceServerWithProfile:sender.title workspace:nil];
+}
+
+// Folder dropped on the Dock icon, or `open -a Harness <dir>`.
+- (BOOL)application:(NSApplication *)sender openFile:(NSString *)filename {
+    BOOL isDir = NO;
+    if (![[NSFileManager defaultManager] fileExistsAtPath:filename isDirectory:&isDir] || !isDir) return NO;
+    if (!self.server) { self.launchWorkspace = filename; return YES; }   // before startServer ran
+    if (self.server.mode == HAServerModeAttached) {
+        [self presentSheetTitle:@"Workspace unchanged" detail:@"Harness is attached to a server it did not start, so its workspace cannot be changed from here." buttons:@[@"OK"] handler:nil];
+        return YES;
+    }
+    [self replaceServerWithProfile:nil workspace:filename];
+    return YES;
+}
 
 - (BOOL)validateMenuItem:(NSMenuItem *)item {
     if (item.action == @selector(toggleKeepAlive:))
@@ -300,7 +353,7 @@ static NSMenu *buildMenu(AppDelegate *d) {
     NSMenu *app = [NSMenu new];
     [app addItem:item(@"About Harness", @selector(showAbout:), @"")];
     [app addItem:[NSMenuItem separatorItem]];
-    [app addItem:item(@"Preferences…", @selector(showPreferences:), @",")];
+    [app addItem:item(@"Settings…", @selector(showPreferences:), @",")];
     [app addItem:[NSMenuItem separatorItem]];
     [app addItem:item(@"Quit Harness", @selector(terminate:), @"q")];
     appItem.submenu = app;
