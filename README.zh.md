@@ -28,6 +28,8 @@ dsh 发布当天我就装了。它很好用，但它是一条终端命令，然�
 
 Harness.app 有意在每一点上选择相反的立场：
 
+<p align="center"><img src="docs/img/screenshot-window.png" width="800" alt="Harness.app showing the DeepSeek Harness UI in a native macOS window"><br><sub>原生 macOS 窗口中的官方 dsh 界面，原封不动。Harness 只添加了标题栏和菜单（Server、dsh、Settings）。</sub></p>
+
 | | Harness.app | 常见封装 |
 |---|---|---|
 | 运行哪个 dsh | **你用 npm 安装的那个。** 上游出新 RC = 一条命令；应用本身无需更新 | 包内锁定的副本；等作者发版 |

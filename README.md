@@ -28,6 +28,8 @@ That's backwards for a tool that is changing weekly. dsh is a developer preview.
 
 Harness.app takes the opposite stance on every point, on purpose:
 
+<p align="center"><img src="docs/img/screenshot-window.png" width="800" alt="Harness.app showing the DeepSeek Harness UI in a native macOS window"><br><sub>The official dsh UI, untouched, in a native macOS window. The only things Harness adds are the title bar and the menus (Server, dsh, Settings).</sub></p>
+
 | | Harness.app | Typical wrapper |
 |---|---|---|
 | Which dsh runs | **The one you installed with npm.** New upstream RC = one command; the app never needs updating | A pinned copy inside the bundle; you wait for their release |

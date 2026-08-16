@@ -28,6 +28,8 @@ Eso es al revés para una herramienta que cambia cada semana. dsh es una versió
 
 Harness.app adopta la postura contraria en cada punto, a propósito:
 
+<p align="center"><img src="docs/img/screenshot-window.png" width="800" alt="Harness.app showing the DeepSeek Harness UI in a native macOS window"><br><sub>La interfaz oficial de dsh, intacta, en una ventana nativa de macOS. Lo único que añade Harness es la barra de título y los menús (Server, dsh, Settings).</sub></p>
+
 | | Harness.app | Envoltorio típico |
 |---|---|---|
 | Qué dsh se ejecuta | **El que instalaste con npm.** Nueva RC del original = un comando; la app nunca necesita actualizarse | Una copia fija dentro del paquete; esperas a su siguiente versión |
