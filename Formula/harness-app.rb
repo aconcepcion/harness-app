@@ -2,12 +2,11 @@ class HarnessApp < Formula
   desc "Native macOS launcher for DeepSeek Harness (dsh) — no Electron, no bundled dsh"
   homepage "https://github.com/aconcepcion/harness-app"
   url "https://github.com/aconcepcion/harness-app/archive/refs/tags/v3.0.0.tar.gz"
-  sha256 "779be273c8889ca6d1180626a5c087dc51f412c33f5bb6d0de19a7b6d4f58bbe"
+  sha256 "15565d74cfb13db675d021c997a13db89fc70b1d162efef471b791b863fa0604"
   license "MIT"
   head "https://github.com/aconcepcion/harness-app.git", branch: "main"
 
   depends_on :macos => :ventura
-  depends_on xcode: :build
 
   def install
     system "make", "app", "ARCHS="
