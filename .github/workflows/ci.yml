@@ -9,9 +9,8 @@ jobs:
         run: make app
       - name: Unit tests
         run: make test
-      - name: Smoke (needs a GUI session; tolerated while we learn the runner)
+      - name: Smoke (end-to-end with fake dsh)
         run: make smoke
-        continue-on-error: true
       - name: Report
         run: |
           lipo -info build/Harness.app/Contents/MacOS/Harness
