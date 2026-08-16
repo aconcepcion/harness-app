@@ -29,12 +29,13 @@ int main(int argc, char **argv) {
     if (bind(fd, (struct sockaddr *)&a, sizeof a) < 0) { perror("bind"); return 2; }
     listen(fd, 16);
     fprintf(stderr, "fakedsh: listening on %d pid %d\n", port, getpid());
-    time_t start = time(NULL); int exit_after = getenv("FAKEDSH_EXIT_AFTER") ? atoi(getenv("FAKEDSH_EXIT_AFTER")) : 0;
+    struct timespec ts0; clock_gettime(CLOCK_MONOTONIC, &ts0); int exit_after = getenv("FAKEDSH_EXIT_AFTER") ? atoi(getenv("FAKEDSH_EXIT_AFTER")) : 0;
     const char *resp = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: 27\r\nConnection: close\r\n\r\n<html><body>fake</body></html>";
     for (;;) {
         fd_set rf; FD_ZERO(&rf); FD_SET(fd, &rf); struct timeval tv = {0, 200000};
         int r = select(fd + 1, &rf, NULL, NULL, &tv);
-        if (exit_after && time(NULL) - start >= exit_after) { fprintf(stderr, "fakedsh: simulated crash\n"); return 3; }
+        struct timespec ts; clock_gettime(CLOCK_MONOTONIC, &ts);
+        if (exit_after && (ts.tv_sec - ts0.tv_sec) + (ts.tv_nsec - ts0.tv_nsec) / 1e9 >= exit_after) { fprintf(stderr, "fakedsh: simulated crash\n"); return 3; }
         if (r <= 0) continue;
         int c = accept(fd, NULL, NULL); if (c < 0) continue;
         char buf[2048]; (void)!read(c, buf, sizeof buf); (void)!write(c, resp, strlen(resp)); close(c);
