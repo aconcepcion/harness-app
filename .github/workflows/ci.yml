@@ -1,0 +1,23 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  build-test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build (universal)
+        run: make app
+      - name: Unit tests
+        run: make test
+      - name: Smoke (needs a GUI session; tolerated while we learn the runner)
+        run: make smoke
+        continue-on-error: true
+      - name: Report
+        run: |
+          lipo -info build/Harness.app/Contents/MacOS/Harness
+          build/Harness.app/Contents/MacOS/Harness --version
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Harness.app-unsigned
+          path: build/Harness.app
+          retention-days: 7
