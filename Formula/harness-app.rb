@@ -28,6 +28,6 @@ class HarnessApp < Formula
   end
 
   test do
-    assert_match "Harness.app", shell_output("#{opt_prefix}/Harness.app/Contents/MacOS/Harness --check-env", 1)
+    assert_match version.to_s, shell_output("#{opt_prefix}/Harness.app/Contents/MacOS/Harness --version")
   end
 end
