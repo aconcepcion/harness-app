@@ -23,7 +23,7 @@
 - Node support rule (dsh `engines`): `^22.19.0 || >=24.0.0`.
 - Broken-node-pty rule: `<dsh package>/node_modules/node-pty/prebuilds/darwin-<arch>/pty.node` missing **or** `spawn-helper` missing/not executable ⇒ broken; `node-pty` dir absent ⇒ unknown (do not nag).
 - Whale emoji icon (never DeepSeek's logo); README states "unofficial community project".
-- Commit after every task with the trailer `Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`.
+- Commit after every task with a conventional-prefix message (feat:/fix:/docs:/test:/ci:/build:).
 
 ---
 
@@ -279,9 +279,7 @@ Expected: `Architectures ... x86_64 arm64`; window titled "Harness" opens, dsh U
 - [ ] **Step 9: Commit**
 
 ```bash
-git add -A && git commit -m "build: scaffold Harness.app repo, universal Makefile, port v2 launcher
-
-Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
+git add -A && git commit -m "build: scaffold Harness.app repo, universal Makefile, port v2 launcher"
 ```
 
 ---
@@ -629,9 +627,7 @@ Expected: `tests/test_environment.m: N checks, 0 failures`.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A && git commit -m "feat: HAEnvironment — login-shell env, dsh/Node discovery, node-pty diagnosis
-
-Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
+git add -A && git commit -m "feat: HAEnvironment — login-shell env, dsh/Node discovery, node-pty diagnosis"
 ```
 
 ---
@@ -1046,9 +1042,7 @@ Expected: all checks pass, `0 failures`. If scenario 3's grandchild survives, ve
 - [ ] **Step 7: Commit**
 
 ```bash
-git add -A && git commit -m "feat: HAServer — attach-or-spawn, HTTP readiness, escalating group stop, one auto-restart; fakedsh test server
-
-Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
+git add -A && git commit -m "feat: HAServer — attach-or-spawn, HTTP readiness, escalating group stop, one auto-restart; fakedsh test server"
 ```
 
 ---
@@ -1241,9 +1235,7 @@ Run: `make test` — Expected: three test binaries, `0 failures` each.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A && git commit -m "feat: HAUpdater — semver compare, npm/GitHub version checks, visible Terminal runner
-
-Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
+git add -A && git commit -m "feat: HAUpdater — semver compare, npm/GitHub version checks, visible Terminal runner"
 ```
 
 ---
@@ -1625,9 +1617,7 @@ Simulate missing dsh: `defaults write com.arnoldoconcepcion.harness-app DshPath 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add -A && git commit -m "feat: v3 AppDelegate — first-run guidance, server wiring, error sheets, close policy, navigation guard, menus, --check-env
-
-Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
+git add -A && git commit -m "feat: v3 AppDelegate — first-run guidance, server wiring, error sheets, close policy, navigation guard, menus, --check-env"
 ```
 
 ---
@@ -1842,9 +1832,7 @@ Check: Cmd-, opens Preferences; changing Port to 3081 + Server ▸ Restart Serve
 - [ ] **Step 5: Commit**
 
 ```bash
-git add -A && git commit -m "feat: Preferences window, Profile submenu, Dock folder drop, About panel
-
-Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
+git add -A && git commit -m "feat: Preferences window, Profile submenu, Dock folder drop, About panel"
 ```
 
 ---
@@ -1910,9 +1898,7 @@ App check: with no GitHub release yet, `api.github.com/...releases/latest` retur
 - [ ] **Step 3: Commit**
 
 ```bash
-git add -A && git commit -m "feat: dsh and app update checks (disclosed, off-able) + manual check
-
-Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
+git add -A && git commit -m "feat: dsh and app update checks (disclosed, off-able) + manual check"
 ```
 
 ---
@@ -2027,9 +2013,7 @@ jobs:
 - [ ] **Step 4: Commit**
 
 ```bash
-git add -A && git commit -m "test: end-to-end smoke script; ci: build + tests on macos-latest
-
-Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
+git add -A && git commit -m "test: end-to-end smoke script; ci: build + tests on macos-latest"
 ```
 
 ---
@@ -2321,9 +2305,7 @@ end
 - [ ] **Step 5: Create the private GitHub repo and push**
 
 ```bash
-cd ~/Projects/harness-app && git add -A && git commit -m "docs: README (en/zh), CHANGELOG, Homebrew formula
-
-Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
+cd ~/Projects/harness-app && git add -A && git commit -m "docs: README (en/zh), CHANGELOG, Homebrew formula"
 gh repo create aconcepcion/harness-app --private --source=. --remote=origin \
   --description "Harness.app — native macOS launcher for DeepSeek Harness (dsh). Your own npm dsh, ~600 lines of ObjC, no Electron, no tray." --push
 gh repo edit aconcepcion/harness-app --add-topic deepseek --add-topic deepseek-harness --add-topic dsh --add-topic macos --add-topic launcher --add-topic objective-c --add-topic wkwebview

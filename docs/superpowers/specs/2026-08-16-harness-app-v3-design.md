@@ -1,6 +1,6 @@
 # Harness.app v3.0 — Design
 
-**Date:** 2026-08-16 · **Status:** approved by Arnold (scope + revisions) · **Author:** Claude with Arnold
+**Date:** 2026-08-16 · **Status:** approved by Arnold (scope + revisions)
 
 ## 1. Purpose
 
