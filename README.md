@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/img/icon-256.png" width="128" alt="Harness.app icon — a whale tail on green"></p>
+
 # Harness.app
 
 **A native macOS launcher for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`). Runs the dsh *you* installed, in a real Mac window, and stops it when you close the window. ~1,200 lines of Objective-C. No Electron, no bundled copy of dsh, no tray daemon.**

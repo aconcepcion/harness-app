@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/img/icon-256.png" width="128" alt="Harness.app icon — a whale tail on green"></p>
+
 # Harness.app
 
 **[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（`dsh`）的原生 macOS 启动器。运行*你自己*安装的 dsh，在真正的 Mac 窗口里，关窗即停。约 1200 行 Objective-C。没有 Electron，不内置 dsh 副本，没有托盘常驻进程。**
