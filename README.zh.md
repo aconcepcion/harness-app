@@ -7,7 +7,7 @@
 > 非官方社区项目，与 DeepSeek 无关。`dsh` 是他们的；这只是一个窗口加一个进程管理器。
 
 > ### 🤖 不想读这么多？把你的智能体指过来。
-> 如果你在用编程智能体 —— **Claude Code、Codex、Cursor、GitHub Copilot、OpenCode、Hermes Agent、Grok、Gemini CLI、Aider，或者 dsh 本身** —— 把下面这段贴给它，然后去泡杯咖啡：
+> 如果你在用编程智能体 —— **Claude Code、Codex、OpenCode、Hermes、Grok Bot 等** —— 把下面这段贴给它，然后去泡杯咖啡：
 >
 > ```
 > 请严格按照 https://github.com/aconcepcion/harness-app#for-ai-agents 在这台 Mac 上安装并配置 Harness.app。逐步验证；如果缺少 dsh，用其中给出的准确命令安装；运行起来后告诉我。

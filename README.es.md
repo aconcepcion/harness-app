@@ -7,7 +7,7 @@ Doble clic → arranca *tu* `dsh web` → muestra la interfaz oficial en una ven
 > Proyecto comunitario no oficial. Sin relación con DeepSeek. `dsh` es suyo; esto es solo una ventana y un gestor de procesos.
 
 > ### 🤖 ¿No quieres leer todo esto? Apunta a tu agente aquí.
-> Si usas un agente de programación — **Claude Code, Codex, Cursor, GitHub Copilot, OpenCode, Hermes Agent, Grok, Gemini CLI, Aider, o el propio dsh** — pégale esto y vete a por un café:
+> Si usas un agente de programación — **Claude Code, Codex, OpenCode, Hermes, Grok Bot, etc.** — pégale esto y vete a por un café:
 >
 > ```
 > Instala y configura Harness.app en este Mac siguiendo exactamente https://github.com/aconcepcion/harness-app#for-ai-agents. Verifica cada paso, instala dsh con el comando exacto indicado si falta, y avísame cuando esté funcionando.
