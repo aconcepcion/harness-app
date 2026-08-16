@@ -124,6 +124,8 @@ open -a Harness "$HOME/projects"        # 或：带工作目录启动
 
 ## 它实际做了什么
 
+<p align="center"><img src="docs/img/menu-harness.png" width="31%" alt="Harness menu"> <img src="docs/img/menu-server.png" width="31%" alt="Server menu"> <img src="docs/img/menu-dsh.png" width="31%" alt="dsh menu"><br><sub>属于我们的部分：Harness、Server 和 dsh 菜单。</sub></p>
+
 - **接管或启动。** 端口上已经有服务在响应（比如你在终端里启动的 `dsh web`），Harness 就接管它，绝不杀掉。否则在你的工作目录中启动 `dsh web --port <Port>`，独立进程组，日志写到 `~/Library/Logs/Harness.app/`。
 - **就绪 = HTTP 200**，而不是"端口开了"。界面真正可用之前显示占位页。
 - **停止 = 向进程组发 SIGTERM → 5 秒 → SIGKILL。** 不会留下孤儿 `node-pty` shell 或 `sandbox-exec` 子进程。

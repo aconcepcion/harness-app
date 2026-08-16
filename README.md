@@ -124,6 +124,8 @@ Contributing agents: see [`AGENTS.md`](AGENTS.md) for build, test and code conve
 
 ## What it actually does
 
+<p align="center"><img src="docs/img/menu-harness.png" width="31%" alt="Harness menu"> <img src="docs/img/menu-server.png" width="31%" alt="Server menu"> <img src="docs/img/menu-dsh.png" width="31%" alt="dsh menu"><br><sub>The parts that are ours: the Harness, Server and dsh menus.</sub></p>
+
 - **Attach or spawn.** If something already answers on the port (e.g. a `dsh web` you started in a terminal), Harness attaches and never kills it. Otherwise it spawns `dsh web --port <Port>` in your workspace, in its own process group, logging to `~/Library/Logs/Harness.app/`.
 - **Readiness = HTTP 200**, not "port open". You see a placeholder until the UI is really there.
 - **Stop = SIGTERM to the process group → 5 s → SIGKILL.** No orphaned `node-pty` shells or `sandbox-exec` children.

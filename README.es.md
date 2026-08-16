@@ -124,6 +124,8 @@ Agentes que contribuyan código: ver [`AGENTS.md`](AGENTS.md) para las convencio
 
 ## Qué hace realmente
 
+<p align="center"><img src="docs/img/menu-harness.png" width="31%" alt="Harness menu"> <img src="docs/img/menu-server.png" width="31%" alt="Server menu"> <img src="docs/img/menu-dsh.png" width="31%" alt="dsh menu"><br><sub>La parte que es nuestra: los menús Harness, Server y dsh.</sub></p>
+
 - **Conectar o arrancar.** Si algo ya responde en el puerto (p. ej. un `dsh web` que arrancaste en una terminal), Harness se conecta y nunca lo mata. Si no, arranca `dsh web --port <Port>` en tu carpeta de trabajo, en su propio grupo de procesos, registrando en `~/Library/Logs/Harness.app/`.
 - **Listo = HTTP 200**, no "puerto abierto". Ves una pantalla de espera hasta que la interfaz está realmente ahí.
 - **Detener = SIGTERM al grupo de procesos → 5 s → SIGKILL.** Sin shells `node-pty` ni hijos `sandbox-exec` huérfanos.
