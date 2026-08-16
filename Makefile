@@ -2,8 +2,8 @@ APP      = Harness
 VERSION  = 3.0.0
 BUILD    = build
 APPDIR   = $(BUILD)/$(APP).app
-SRC      = src/main.m
-LIBSRC   =
+SRC      = src/main.m src/HAEnvironment.m
+LIBSRC   = src/HAEnvironment.m
 HDR      = $(wildcard src/*.h)
 ARCHS   ?= -arch arm64 -arch x86_64
 CFLAGS   = -fobjc-arc -O2 -Wall -Wextra -Wno-unused-parameter -mmacosx-version-min=13.0
