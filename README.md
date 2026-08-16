@@ -6,7 +6,7 @@ Double-click → it starts *your* `dsh web` → shows the official UI in a nativ
 
 > Unofficial community project. Not affiliated with DeepSeek. `dsh` is theirs; this is just a window and a process manager.
 
-[中文](README.zh.md) · [For AI agents ↓](#for-ai-agents) · [Install ↓](#install)
+[中文](README.zh.md) · [Español](README.es.md) · [For AI agents ↓](#for-ai-agents) · [Install ↓](#install)
 
 ## Why I built this
 
@@ -171,4 +171,16 @@ Only Command Line Tools are needed. There is no notarized download on purpose: a
 
 ## License
 
-MIT © Arnoldo Concepcion. DeepSeek's name and logo belong to DeepSeek.
+Harness.app is released under the **MIT License** — one of the most permissive open-source licenses in existence and the one Homebrew, GitHub and most companies already know how to handle. In plain terms:
+
+- **You may** use, copy, modify, merge, publish, distribute, sublicense and sell copies of this software, for any purpose, commercial or not, with or without changes, without asking.
+- **You must** keep the copyright notice and the license text with any copy or substantial portion you distribute. That is the only condition.
+- **No warranty.** The software is provided "as is"; the author is not liable for anything that happens as a result of using it.
+
+The full text is in [`LICENSE`](LICENSE). Contributions are accepted under the same license — by opening a pull request you agree your contribution is MIT-licensed like the rest.
+
+Harness.app has no third-party dependencies: it links only against Apple's system frameworks (AppKit, WebKit, Foundation), so there are no bundled third-party notices to reproduce.
+
+**Trademarks.** "DeepSeek" and the DeepSeek whale logo are trademarks of DeepSeek. This project is unaffiliated, unendorsed, and uses neither; the name "Harness" here refers to the software category, not to any DeepSeek product. `dsh` is DeepSeek's software, released under its own license (MIT at the time of writing), and is not distributed with this app.
+
+© 2026 Arnoldo Concepcion.

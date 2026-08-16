@@ -6,7 +6,7 @@
 
 > 非官方社区项目，与 DeepSeek 无关。`dsh` 是他们的；这只是一个窗口加一个进程管理器。
 
-[English](README.md) · [给 AI 智能体 ↓](#给-ai-智能体) · [安装 ↓](#安装)
+[English](README.md) · [Español](README.es.md) · [给 AI 智能体 ↓](#给-ai-智能体) · [安装 ↓](#安装)
 
 ## 我为什么做这个
 
@@ -171,4 +171,16 @@ make install    # 复制到 /Applications（ad-hoc 签名）
 
 ## 许可
 
-MIT © Arnoldo Concepcion。图标为鲸鱼 emoji；DeepSeek 的名称与标志归 DeepSeek 所有。
+Harness.app 以 **MIT 许可证**发布 —— 现存最宽松的开源许可证之一，也是 Homebrew、GitHub 和大多数公司都已经熟悉如何处理的一种。用大白话说：
+
+- **你可以**出于任何目的（商业或非商业）、无论是否修改，使用、复制、修改、合并、发布、分发、再授权和出售本软件的副本，无需征求许可。
+- **你必须**在分发的任何副本或实质部分中保留版权声明和许可证文本。这是唯一的条件。
+- **不提供保证。** 软件按"原样"提供；作者不对使用它所导致的任何后果负责。
+
+完整文本见 [`LICENSE`](LICENSE)。贡献以同一许可证接收 —— 提交 pull request 即表示你同意你的贡献与其余部分一样采用 MIT 许可。
+
+Harness.app 没有第三方依赖：它只链接 Apple 的系统框架（AppKit、WebKit、Foundation），因此没有需要转载的第三方声明。
+
+**商标。** "DeepSeek" 及 DeepSeek 鲸鱼标志是 DeepSeek 的商标。本项目与其无关、未获其背书，也未使用二者；这里的 "Harness" 指软件类别，而非任何 DeepSeek 产品。`dsh` 是 DeepSeek 的软件，以其自身的许可证发布（撰写本文时为 MIT），并不随本应用分发。
+
+© 2026 Arnoldo Concepcion。
