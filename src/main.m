@@ -5,6 +5,9 @@
 #import "HAServer.h"
 #import "HAUpdater.h"
 #import "HAPreferencesWindow.h"
+#import "HASleepGuard.h"
+#import "HAInstaller.h"
+#import <sys/stat.h>
 
 @interface AppDelegate : NSObject <NSApplicationDelegate, NSWindowDelegate, WKUIDelegate, WKNavigationDelegate, HAServerDelegate, NSMenuDelegate>
 @property (strong) NSWindow *window;
@@ -12,6 +15,7 @@
 @property (strong) HAEnvironment *env;
 @property (strong) HAServer *server;
 @property (strong) HAUpdater *updater;
+@property (strong) HASleepGuard *sleepGuard;
 @property (copy) NSString *launchWorkspace;          // Dock drop / open-with, overrides preference for this launch
 @property (strong) NSMutableDictionary<NSString *, NSString *> *notices;
 @property (strong) NSMenu *profileMenu;
@@ -75,6 +79,7 @@
 
 - (void)applicationDidFinishLaunching:(NSNotification *)note {
     HARegisterDefaults();
+    [[NSUserDefaults standardUserDefaults] addObserver:self forKeyPath:HAPrefPreventSleep options:0 context:NULL];   // Settings checkbox
     [self buildWindow];
     [self showPlaceholder:@"Starting DeepSeek Harness…"];
     [self bootstrap];
@@ -120,6 +125,7 @@
     if (workspace) self.launchWorkspace = workspace;
     HAServer *old = self.server;
     old.delegate = nil;
+    [self.sleepGuard deactivate];
     [self showPlaceholder:@"Restarting dsh…"];
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
         if (old.mode == HAServerModeSpawned) [old stopSynchronously:5];
@@ -166,6 +172,7 @@
     if (server != self.server) return;
     [self.webView loadRequest:[NSURLRequest requestWithURL:server.baseURL]];
     [self setNotice:nil forKey:@"server"];
+    [self applySleepGuard];
     if (!self.updateChecksRan) { self.updateChecksRan = YES; [self runBackgroundUpdateChecks]; }
 }
 - (void)serverDidRestart:(HAServer *)server {
@@ -193,6 +200,8 @@
 - (void)windowWillClose:(NSNotification *)note { [NSApp terminate:nil]; }
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app { return YES; }
 - (void)applicationWillTerminate:(NSNotification *)note {
+    [self.sleepGuard deactivate];
+    [[NSUserDefaults standardUserDefaults] removeObserver:self forKeyPath:HAPrefPreventSleep];
     BOOL keep = [[NSUserDefaults standardUserDefaults] boolForKey:HAPrefKeepServerRunning];
     if (self.server.mode == HAServerModeSpawned && !keep) [self.server stopSynchronously:5];
 }
@@ -225,6 +234,13 @@
     NSAlert *a = [NSAlert new]; a.messageText = message; [a addButtonWithTitle:@"OK"]; [a addButtonWithTitle:@"Cancel"];
     [a beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse r) { completionHandler(r == NSAlertFirstButtonReturn); }];
 }
+// <input type=file> inside the UI: without this method WKWebView silently does nothing.
+- (void)webView:(WKWebView *)webView runOpenPanelWithParameters:(WKOpenPanelParameters *)parameters initiatedByFrame:(WKFrameInfo *)frame
+        completionHandler:(void (^)(NSArray<NSURL *> *_Nullable))completionHandler {
+    NSOpenPanel *p = [NSOpenPanel openPanel];
+    p.canChooseFiles = YES; p.canChooseDirectories = parameters.allowsDirectories; p.allowsMultipleSelection = parameters.allowsMultipleSelection;
+    [p beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse r) { completionHandler(r == NSModalResponseOK ? p.URLs : nil); }];
+}
 
 #pragma mark - Update checks (disclosed, off-able)
 
@@ -251,7 +267,7 @@
         if (!newer) { [self presentSheetTitle:@"dsh is up to date" detail:[NSString stringWithFormat:@"Installed %@ · latest on npm %@", self.env.dshVersion ?: @"?", latest] buttons:@[@"OK"] handler:nil]; return; }
         [self setNotice:[NSString stringWithFormat:@"dsh %@ available — dsh ▸ Update dsh…", latest] forKey:@"dsh-update"];
         [self presentSheetTitle:[NSString stringWithFormat:@"dsh %@ is available", latest]
-                         detail:[NSString stringWithFormat:@"Installed: %@. Update runs visibly in Terminal:\n\n%@", self.env.dshVersion ?: @"?", HADshInstallCommand]
+                         detail:[NSString stringWithFormat:@"Installed: %@. Update runs visibly in Terminal:\n\n%@", self.env.dshVersion ?: @"?", [self dshInstallCommand]]
                         buttons:@[@"Update in Terminal", @"Later"] handler:^(NSInteger i) { if (i == 0) [self updateDsh:nil]; }];
     }];
 }
@@ -260,11 +276,25 @@
 
 - (void)reloadPage:(id)sender { [self.webView reload]; }
 - (void)openInBrowser:(id)sender { if (self.server) [[NSWorkspace sharedWorkspace] openURL:self.server.baseURL]; }
-- (void)restartServer:(id)sender { if (self.server) { [self showPlaceholder:@"Restarting dsh…"]; [self.server restart]; } else [self startServer]; }
+- (void)restartServer:(id)sender { [self.sleepGuard deactivate]; if (self.server) { [self showPlaceholder:@"Restarting dsh…"]; [self.server restart]; } else [self startServer]; }
 - (void)toggleKeepAlive:(id)sender {
     NSUserDefaults *d = [NSUserDefaults standardUserDefaults];
     [d setBool:![d boolForKey:HAPrefKeepServerRunning] forKey:HAPrefKeepServerRunning];
 }
+- (void)applySleepGuard {
+    if (!self.sleepGuard) self.sleepGuard = [HASleepGuard new];
+    BOOL want = [[NSUserDefaults standardUserDefaults] boolForKey:HAPrefPreventSleep] && self.server != nil && self.server.mode != HAServerModeNone;
+    if (want) [self.sleepGuard activateWithReason:@"Harness.app: dsh server running"]; else [self.sleepGuard deactivate];
+}
+- (void)togglePreventSleep:(id)sender {
+    NSUserDefaults *d = [NSUserDefaults standardUserDefaults];
+    [d setBool:![d boolForKey:HAPrefPreventSleep] forKey:HAPrefPreventSleep];   // the observer applies it
+}
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
+    if ([keyPath isEqualToString:HAPrefPreventSleep]) [self applySleepGuard];
+}
+// Update/repair aim at the npm prefix that owns the dsh we found (a login shell may put another npm first).
+- (NSString *)dshInstallCommand { return HADshInstallCommandForPackageDir(self.env.dshPackageDir); }
 - (void)openLog:(id)sender { [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:HALogPath()]]; }
 - (void)openWorkspaceInTerminal:(id)sender {
     NSError *err = nil;
@@ -273,7 +303,7 @@
 }
 - (void)runInstallCommandWithTitle:(NSString *)title {
     NSError *err = nil;
-    if (![HAUpdater runInTerminal:HADshInstallCommand error:&err]) { [self presentSheetTitle:@"Could not open Terminal" detail:err.localizedDescription buttons:@[@"OK"] handler:nil]; return; }
+    if (![HAUpdater runInTerminal:[self dshInstallCommand] error:&err]) { [self presentSheetTitle:@"Could not open Terminal" detail:err.localizedDescription buttons:@[@"OK"] handler:nil]; return; }
     [self presentSheetTitle:title detail:@"The command is running in Terminal — nothing happens hidden. When it finishes, choose Server ▸ Restart Server." buttons:@[@"OK"] handler:nil];
 }
 - (void)updateDsh:(id)sender { [self runInstallCommandWithTitle:@"Updating dsh in Terminal…"]; }
@@ -338,6 +368,8 @@
 - (BOOL)validateMenuItem:(NSMenuItem *)item {
     if (item.action == @selector(toggleKeepAlive:))
         item.state = [[NSUserDefaults standardUserDefaults] boolForKey:HAPrefKeepServerRunning] ? NSControlStateValueOn : NSControlStateValueOff;
+    if (item.action == @selector(togglePreventSleep:))
+        item.state = [[NSUserDefaults standardUserDefaults] boolForKey:HAPrefPreventSleep] ? NSControlStateValueOn : NSControlStateValueOff;
     if (item.action == @selector(openInBrowser:) || item.action == @selector(restartServer:)) return self.server != nil;
     return YES;
 }
@@ -376,6 +408,7 @@ static NSMenu *buildMenu(AppDelegate *d) {
     NSMenu *server = [[NSMenu alloc] initWithTitle:@"Server"];
     [server addItem:item(@"Restart Server", @selector(restartServer:), @"")];
     [server addItem:item(@"Keep Server Running After Close", @selector(toggleKeepAlive:), @"")];
+    [server addItem:item(@"Prevent Sleep While Running", @selector(togglePreventSleep:), @"")];
     NSMenuItem *profileItem = item(@"Profile", NULL, @"");
     d.profileMenu = [[NSMenu alloc] initWithTitle:@"Profile"]; d.profileMenu.delegate = d;
     profileItem.submenu = d.profileMenu; [server addItem:profileItem];

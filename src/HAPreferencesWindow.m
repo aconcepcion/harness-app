@@ -22,7 +22,7 @@ NSArray<NSString *> *HAAvailableProfiles(NSDictionary *env) {
 @implementation HAPreferencesWindowController
 
 - (instancetype)initWithOpenLog:(void (^)(void))openLog {
-    NSWindow *w = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 540, 340)
+    NSWindow *w = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 560, 370)
         styleMask:(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable) backing:NSBackingStoreBuffered defer:NO];
     w.title = @"Harness Settings";
     if ((self = [super initWithWindow:w])) { _openLog = [openLog copy]; [self buildUI]; [w center]; }
@@ -59,6 +59,7 @@ NSArray<NSString *> *HAAvailableProfiles(NSDictionary *env) {
     NSButton *chooseDsh = [NSButton buttonWithTitle:@"Choose…" target:self action:@selector(chooseDsh:)];
 
     NSButton *keep = [self checkbox:@"Keep the dsh server running after the window closes" key:HAPrefKeepServerRunning];
+    NSButton *sleep = [self checkbox:@"Prevent sleep while the server is running (idle sleep only; a closed lid still sleeps)" key:HAPrefPreventSleep];
     NSButton *chkDsh = [self checkbox:@"Check for dsh updates at launch (runs npm view)" key:HAPrefCheckDshUpdates];
     NSButton *chkApp = [self checkbox:@"Check for Harness updates at launch (asks api.github.com)" key:HAPrefCheckAppUpdates];
     NSButton *openLog = [NSButton buttonWithTitle:@"Open Log" target:self action:@selector(openLogClicked:)];
@@ -76,6 +77,7 @@ NSArray<NSString *> *HAAvailableProfiles(NSDictionary *env) {
         @[[self label:@"Profile:"], self.profilePopup],
         @[[self label:@"dsh path:"], dshRow],
         @[[NSView new], keep],
+        @[[NSView new], sleep],
         @[[NSView new], chkDsh],
         @[[NSView new], chkApp],
         @[[NSView new], openLog],
