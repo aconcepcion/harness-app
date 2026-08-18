@@ -10,7 +10,7 @@ static NSString *const HAPrefCheckDshUpdates   = @"CheckForDshUpdates"; // BOOL,
 static NSString *const HAPrefCheckAppUpdates   = @"CheckForAppUpdates"; // BOOL, default YES
 static NSString *const HAPrefPreventSleep      = @"PreventSleepWhileRunning"; // BOOL, default NO
 
-static NSString *const HAAppVersion     = @"3.0.0";
+static NSString *const HAAppVersion     = @"3.1.0";
 static NSString *const HAGitHubRepo     = @"aconcepcion/harness-app";
 static NSString *const HADefaultProfile = @"web";
 static uint16_t const HADefaultPort     = 3080;

@@ -23,6 +23,7 @@ defaults write "$DOMAIN" DshPath "$FAKE"
 defaults write "$DOMAIN" KeepServerRunning -bool NO
 defaults write "$DOMAIN" CheckForDshUpdates -bool NO
 defaults write "$DOMAIN" CheckForAppUpdates -bool NO
+defaults write "$DOMAIN" PreventSleepWhileRunning -bool NO
 pkill -9 -f "fakedsh web" 2>/dev/null; sleep 0.5
 mkdir -p "$(dirname "$LOG")"; : > "$LOG"
 
@@ -59,5 +60,13 @@ FAKEDSH_IGNORE_TERM=1 "$BIN" >/dev/null 2>&1 & APP_PID=$!
 wait_for up 60 || fail "stubborn: never came up"
 stop_app; sleep 1
 up && fail "stubborn server survived" || ok "stubborn server killed (SIGKILL escalation)"
+
+echo "5. prevent-sleep: IOPM assertion held while running, released on quit"
+defaults write "$DOMAIN" PreventSleepWhileRunning -bool YES
+launch; wait_for up 60 || fail "prevent-sleep: server never came up"
+wait_for "pmset -g assertions | grep 'Harness.app: dsh server running' >/dev/null" 20 && ok "assertion present while running" || fail "no sleep assertion while running"   # not grep -q: pipefail + SIGPIPE
+stop_app; sleep 1
+pmset -g assertions | grep 'Harness.app: dsh server running' >/dev/null && fail "assertion survived quit" || ok "assertion released on quit"
+defaults write "$DOMAIN" PreventSleepWhileRunning -bool NO
 
 echo "smoke: $FAILS failure(s)"; exit $((FAILS > 0))

@@ -1,5 +1,5 @@
 APP      = Harness
-VERSION  = 3.0.0
+VERSION  = 3.1.0
 BUILD    = build
 APPDIR   = $(BUILD)/$(APP).app
 SRC      = src/main.m src/HAEnvironment.m src/HAServer.m src/HAUpdater.m src/HAPreferencesWindow.m src/HASleepGuard.m src/HAInstaller.m
