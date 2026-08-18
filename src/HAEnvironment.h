@@ -2,6 +2,11 @@
 NS_ASSUME_NONNULL_BEGIN
 
 extern NSString *const HADshInstallCommand;
+/// $DSH_HOME from the (login-shell) environment, else ~/.dsh.
+NSString *HADshHome(NSDictionary<NSString *, NSString *> *_Nullable env);
+/// The dsh install/update command aimed at the npm prefix that owns `pkgDir`
+/// (<prefix>/lib/node_modules/@deepseek-ai/dsh). Falls back to HADshInstallCommand.
+NSString *HADshInstallCommandForPackageDir(NSString *_Nullable pkgDir);
 
 typedef NS_ENUM(NSInteger, HANodePtyState) { HANodePtyUnknown = 0, HANodePtyIntact, HANodePtyBroken };
 

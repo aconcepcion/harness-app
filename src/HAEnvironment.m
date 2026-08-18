@@ -1,7 +1,26 @@
 #import "HAEnvironment.h"
 
-NSString *const HADshInstallCommand =
-    @"npm install -g --allow-scripts=@deepseek-ai/dsh-subprocess-local,koffi,node-pty,@google/genai,protobufjs @deepseek-ai/dsh@latest";
+#import "HAUpdater.h"   // HAShellQuote
+
+// The one place the install flags live; every install/update/repair command is composed from it.
+#define HA_DSH_INSTALL_ARGS "install -g --allow-scripts=@deepseek-ai/dsh-subprocess-local,koffi,node-pty,@google/genai,protobufjs @deepseek-ai/dsh@latest"
+NSString *const HADshInstallCommand = @"npm " HA_DSH_INSTALL_ARGS;
+
+NSString *HADshHome(NSDictionary *env) {
+    NSString *h = env[@"DSH_HOME"];
+    return h.length ? h : [NSHomeDirectory() stringByAppendingPathComponent:@".dsh"];
+}
+
+// A user can have several npm prefixes (Homebrew, nvm, ~/.local). Updating through whichever `npm` is
+// first on PATH may install a second dsh that shadows the one Harness found; aim at the owning prefix.
+NSString *HADshInstallCommandForPackageDir(NSString *pkgDir) {
+    NSRange r = [pkgDir ?: @"" rangeOfString:@"/lib/node_modules/"];
+    if (r.location == NSNotFound || r.location == 0) return HADshInstallCommand;
+    NSString *prefix = [pkgDir substringToIndex:r.location];
+    NSString *npm = [prefix stringByAppendingPathComponent:@"bin/npm"];
+    if ([[NSFileManager defaultManager] isExecutableFileAtPath:npm]) return [HAShellQuote(npm) stringByAppendingString:@" " HA_DSH_INSTALL_ARGS];
+    return [NSString stringWithFormat:@"npm --prefix %@ " HA_DSH_INSTALL_ARGS, HAShellQuote(prefix)];
+}
 
 NSString *HARunCommandOutput(NSString *path, NSArray<NSString *> *args, NSDictionary *env,
                              NSTimeInterval timeout, int *status) {

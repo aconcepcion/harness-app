@@ -1,9 +1,9 @@
 #import "HAPreferencesWindow.h"
 #import "HAConfig.h"
+#import "HAEnvironment.h"
 
 NSArray<NSString *> *HAAvailableProfiles(NSDictionary *env) {
-    NSString *dshHome = env[@"DSH_HOME"]; NSString *home = dshHome.length ? dshHome : [NSHomeDirectory() stringByAppendingPathComponent:@".dsh"];
-    NSString *dir = [home stringByAppendingPathComponent:@"profiles"];
+    NSString *dir = [HADshHome(env) stringByAppendingPathComponent:@"profiles"];
     NSMutableOrderedSet *names = [NSMutableOrderedSet orderedSetWithObject:HADefaultProfile];
     for (NSString *n in [[NSFileManager defaultManager] contentsOfDirectoryAtPath:dir error:nil]) {
         BOOL isDir = NO;

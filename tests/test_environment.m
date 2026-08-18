@@ -85,5 +85,26 @@ int main(void) { @autoreleasepool {
     NSDictionary *real = HACaptureLoginShellEnvironment(8);
     HA_ASSERT([real[@"PATH"] length] > 0, "captured PATH");
     [[NSFileManager defaultManager] removeItemAtPath:d error:nil];
+
+    // v3.1: DSH_HOME resolution
+    HA_EQ_STR(HADshHome(@{@"DSH_HOME": @"/tmp/dshx"}), @"/tmp/dshx");
+    HA_EQ_STR(HADshHome(@{@"DSH_HOME": @""}), [NSHomeDirectory() stringByAppendingPathComponent:@".dsh"]);
+    HA_EQ_STR(HADshHome(nil), [NSHomeDirectory() stringByAppendingPathComponent:@".dsh"]);
+
+    // v3.1: the install/update command targets the npm that owns the found dsh
+    {
+        NSFileManager *fm = [NSFileManager defaultManager];
+        NSString *prefix = [NSTemporaryDirectory() stringByAppendingFormat:@"haprefix-%d", getpid()];
+        NSString *pkg = [prefix stringByAppendingPathComponent:@"lib/node_modules/@deepseek-ai/dsh"];
+        [fm createDirectoryAtPath:pkg withIntermediateDirectories:YES attributes:nil error:nil];
+        HA_ASSERT(([HADshInstallCommandForPackageDir(pkg) hasPrefix:[NSString stringWithFormat:@"npm --prefix '%@' install -g --allow-scripts=", prefix]]), "no sibling npm -> --prefix form: %s", HADshInstallCommandForPackageDir(pkg).UTF8String);
+        NSString *npmBin = [prefix stringByAppendingPathComponent:@"bin/npm"];
+        touch(npmBin, YES);
+        HA_ASSERT(([HADshInstallCommandForPackageDir(pkg) hasPrefix:[NSString stringWithFormat:@"'%@' install -g --allow-scripts=", npmBin]]), "sibling npm -> quoted npm path: %s", HADshInstallCommandForPackageDir(pkg).UTF8String);
+        HA_ASSERT([HADshInstallCommandForPackageDir(pkg) hasSuffix:@"@deepseek-ai/dsh@latest"], "same package spec");
+        HA_EQ_STR(HADshInstallCommandForPackageDir(nil), HADshInstallCommand);
+        HA_EQ_STR(HADshInstallCommandForPackageDir(@"/weird/place/dsh"), HADshInstallCommand);
+        [fm removeItemAtPath:prefix error:nil];
+    }
     HA_DONE();
 } }
