@@ -33,7 +33,7 @@ Harness.app takes the opposite stance on every point, on purpose:
 | | Harness.app | Typical wrapper |
 |---|---|---|
 | Which dsh runs | **The one you installed with npm.** New upstream RC = one command; the app never needs updating | A pinned copy inside the bundle; you wait for their release |
-| Size / stack | <400 KB universal binary, AppKit + the system WebKit, one `clang` command | 300–500 MB Electron/Tauri, bundled Chromium or Rust toolchain |
+| Size / stack | ~400 KB universal binary, AppKit + the system WebKit, one `clang` command | 300–500 MB Electron/Tauri, bundled Chromium or Rust toolchain |
 | Trust | Read all of it in half an hour; `brew` compiles it on *your* machine | A notarized (or not) binary from a stranger |
 | Close the window | **Stops the server** (opt-in keep-alive; no tray, no daemon) | Hides to a tray; server keeps running |
 | Network | localhost + two disclosed, off-able version checks | Update servers, sometimes counted-download endpoints |
@@ -44,7 +44,7 @@ If you want a tray app with a plugin marketplace, use one of the others — they
 ## Why those things are good (if you're not a Mac developer)
 
 - **"Runs your own npm dsh"** — dsh is installed by npm, Node's package manager. Harness doesn't carry a copy; it launches the one on your machine. So when DeepSeek ships a new version, you type one command and you're on it — Harness never has to release anything. You are never waiting on a middleman.
-- **"~1,600 lines of Objective-C, no Electron"** — Electron apps bundle an entire Chrome browser to draw their window (that's why they're 300–500 MB and use a lot of memory). Harness uses the browser engine already built into macOS, through Apple's own AppKit. Result: a sub-400 KB app that opens in about a second, feels native, and is small enough that a curious person can read *all* of it — there is nowhere for anything sneaky to hide. Homebrew even compiles it from source on your own Mac.
+- **"~1,600 lines of Objective-C, no Electron"** — Electron apps bundle an entire Chrome browser to draw their window (that's why they're 300–500 MB and use a lot of memory). Harness uses the browser engine already built into macOS, through Apple's own AppKit. Result: a ~400 KB app that opens in about a second, feels native, and is small enough that a curious person can read *all* of it — there is nowhere for anything sneaky to hide. Homebrew even compiles it from source on your own Mac.
 - **"No tray, no daemon"** — many desktop wrappers keep running in the menu bar after you close the window, with the server still going. Harness behaves like a document: close the window, it's gone, nothing left running. (If you *want* the server to stay up between sessions, there's a checkbox for that — off by default.)
 - **"Two disclosed, off-able version checks"** — the only network traffic besides talking to dsh on your own machine is a version lookup on npm (for dsh) and on GitHub (for Harness). Both are visible in Settings and can be switched off. No telemetry, no phone-home.
 - **"Never constrains dsh"** — the app doesn't put itself between you and dsh's plugin system. Your `~/.dsh`, your profiles, your PATH. Whatever dsh can do from the terminal, it can do inside Harness.

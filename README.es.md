@@ -33,7 +33,7 @@ Harness.app adopta la postura contraria en cada punto, a propósito:
 | | Harness.app | Envoltorio típico |
 |---|---|---|
 | Qué dsh se ejecuta | **El que instalaste con npm.** Nueva RC del original = un comando; la app nunca necesita actualizarse | Una copia fija dentro del paquete; esperas a su siguiente versión |
-| Tamaño / tecnología | Binario universal <400 KB, AppKit + el WebKit del sistema, un solo comando `clang` | 300–500 MB de Electron/Tauri, Chromium empaquetado o cadena de herramientas Rust |
+| Tamaño / tecnología | Binario universal de ~400 KB, AppKit + el WebKit del sistema, un solo comando `clang` | 300–500 MB de Electron/Tauri, Chromium empaquetado o cadena de herramientas Rust |
 | Confianza | Léelo entero en media hora; `brew` lo compila en *tu* máquina | Un binario (notarizado o no) de un desconocido |
 | Cerrar la ventana | **Detiene el servidor** (mantenerlo vivo es opcional; sin barra de menús, sin demonio) | Se esconde en la barra de menús; el servidor sigue corriendo |
 | Red | localhost + dos comprobaciones de versión declaradas y desactivables | Servidores de actualización, a veces con contadores de descarga |
@@ -44,7 +44,7 @@ Si quieres una app de barra de menús con tienda de plugins, usa una de las otra
 ## Por qué eso es bueno (si no eres desarrollador de Mac)
 
 - **"Ejecuta tu propio dsh de npm"** — dsh se instala con npm, el gestor de paquetes de Node. Harness no lleva una copia; lanza la que hay en tu máquina. Así que cuando DeepSeek publica una versión nueva, escribes un comando y ya la tienes — Harness nunca tiene que publicar nada. Nunca esperas a un intermediario.
-- **"~1.600 líneas de Objective-C, sin Electron"** — las apps Electron empaquetan un navegador Chrome completo para dibujar su ventana (por eso pesan 300–500 MB y consumen mucha memoria). Harness usa el motor de navegador que ya viene en macOS, a través del propio AppKit de Apple. Resultado: una app de menos de 400 KB que abre en un segundo, se siente nativa, y es tan pequeña que cualquier persona curiosa puede leerla *entera* — no hay dónde esconder nada raro. Homebrew incluso la compila desde el código fuente en tu propio Mac.
+- **"~1.600 líneas de Objective-C, sin Electron"** — las apps Electron empaquetan un navegador Chrome completo para dibujar su ventana (por eso pesan 300–500 MB y consumen mucha memoria). Harness usa el motor de navegador que ya viene en macOS, a través del propio AppKit de Apple. Resultado: una app de unos 400 KB que abre en un segundo, se siente nativa, y es tan pequeña que cualquier persona curiosa puede leerla *entera* — no hay dónde esconder nada raro. Homebrew incluso la compila desde el código fuente en tu propio Mac.
 - **"Sin barra de menús, sin demonio"** — muchos envoltorios de escritorio siguen corriendo en la barra de menús después de cerrar la ventana, con el servidor aún activo. Harness se comporta como un documento: cierras la ventana y desaparece, sin dejar nada corriendo. (Si *quieres* que el servidor siga entre sesiones, hay una casilla para eso — desactivada por defecto.)
 - **"Dos comprobaciones de versión declaradas y desactivables"** — el único tráfico de red aparte de hablar con dsh en tu propia máquina es una consulta de versión a npm (para dsh) y a GitHub (para Harness). Ambas son visibles en Ajustes y se pueden desactivar. Sin telemetría, sin llamadas a casa.
 - **"Nunca limita a dsh"** — la app no se pone entre tú y el sistema de plugins de dsh. Tu `~/.dsh`, tus perfiles, tu PATH. Todo lo que dsh puede hacer desde la terminal, puede hacerlo dentro de Harness.

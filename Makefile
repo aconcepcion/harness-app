@@ -6,7 +6,7 @@ SRC      = src/main.m src/HAEnvironment.m src/HAServer.m src/HAUpdater.m src/HAP
 LIBSRC   = src/HAEnvironment.m src/HAServer.m src/HAUpdater.m src/HASleepGuard.m src/HAInstaller.m
 HDR      = $(wildcard src/*.h)
 ARCHS   ?= -arch arm64 -arch x86_64
-CFLAGS   = -fobjc-arc -O2 -Wall -Wextra -Wno-unused-parameter -mmacosx-version-min=13.0
+CFLAGS   = -fobjc-arc -Os -Wl,-dead_strip -Wall -Wextra -Wno-unused-parameter -mmacosx-version-min=13.0
 FW       = -framework Cocoa -framework WebKit -framework IOKit
 TESTS    = $(patsubst tests/%.m,$(BUILD)/%,$(wildcard tests/test_*.m))
 
@@ -28,6 +28,7 @@ $(APPDIR): $(BUILD)/$(APP) $(BUILD)/AppIcon.icns Resources/Info.plist.in
 	mkdir -p $(APPDIR)/Contents/MacOS $(APPDIR)/Contents/Resources
 	sed 's/@VERSION@/$(VERSION)/g' Resources/Info.plist.in > $(APPDIR)/Contents/Info.plist
 	cp $(BUILD)/$(APP) $(APPDIR)/Contents/MacOS/$(APP)
+	strip -x $(APPDIR)/Contents/MacOS/$(APP)
 	cp $(BUILD)/AppIcon.icns $(APPDIR)/Contents/Resources/AppIcon.icns
 	codesign --force -s - $(APPDIR)
 	@echo "built $(APPDIR)"; lipo -info $(APPDIR)/Contents/MacOS/$(APP)
