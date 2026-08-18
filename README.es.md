@@ -2,7 +2,7 @@
 
 # Harness.app
 
-**Un lanzador nativo para macOS de [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`). Ejecuta el dsh que *tú* instalaste, en una ventana de Mac de verdad, y lo detiene cuando cierras la ventana. ~1.200 líneas de Objective-C. Sin Electron, sin copia empaquetada de dsh, sin icono residente en la barra de menús.**
+**Un lanzador nativo para macOS de [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (`dsh`). Ejecuta el dsh que *tú* instalaste, en una ventana de Mac de verdad, y lo detiene cuando cierras la ventana. ~1.600 líneas de Objective-C. Sin Electron, sin copia empaquetada de dsh, sin icono residente en la barra de menús.**
 
 Doble clic → arranca *tu* `dsh web` → muestra la interfaz oficial en una ventana nativa → detiene el servidor cuando la cierras.
 
@@ -44,7 +44,7 @@ Si quieres una app de barra de menús con tienda de plugins, usa una de las otra
 ## Por qué eso es bueno (si no eres desarrollador de Mac)
 
 - **"Ejecuta tu propio dsh de npm"** — dsh se instala con npm, el gestor de paquetes de Node. Harness no lleva una copia; lanza la que hay en tu máquina. Así que cuando DeepSeek publica una versión nueva, escribes un comando y ya la tienes — Harness nunca tiene que publicar nada. Nunca esperas a un intermediario.
-- **"~1.200 líneas de Objective-C, sin Electron"** — las apps Electron empaquetan un navegador Chrome completo para dibujar su ventana (por eso pesan 300–500 MB y consumen mucha memoria). Harness usa el motor de navegador que ya viene en macOS, a través del propio AppKit de Apple. Resultado: una app de menos de 400 KB que abre en un segundo, se siente nativa, y es tan pequeña que cualquier persona curiosa puede leerla *entera* — no hay dónde esconder nada raro. Homebrew incluso la compila desde el código fuente en tu propio Mac.
+- **"~1.600 líneas de Objective-C, sin Electron"** — las apps Electron empaquetan un navegador Chrome completo para dibujar su ventana (por eso pesan 300–500 MB y consumen mucha memoria). Harness usa el motor de navegador que ya viene en macOS, a través del propio AppKit de Apple. Resultado: una app de menos de 400 KB que abre en un segundo, se siente nativa, y es tan pequeña que cualquier persona curiosa puede leerla *entera* — no hay dónde esconder nada raro. Homebrew incluso la compila desde el código fuente en tu propio Mac.
 - **"Sin barra de menús, sin demonio"** — muchos envoltorios de escritorio siguen corriendo en la barra de menús después de cerrar la ventana, con el servidor aún activo. Harness se comporta como un documento: cierras la ventana y desaparece, sin dejar nada corriendo. (Si *quieres* que el servidor siga entre sesiones, hay una casilla para eso — desactivada por defecto.)
 - **"Dos comprobaciones de versión declaradas y desactivables"** — el único tráfico de red aparte de hablar con dsh en tu propia máquina es una consulta de versión a npm (para dsh) y a GitHub (para Harness). Ambas son visibles en Ajustes y se pueden desactivar. Sin telemetría, sin llamadas a casa.
 - **"Nunca limita a dsh"** — la app no se pone entre tú y el sistema de plugins de dsh. Tu `~/.dsh`, tus perfiles, tu PATH. Todo lo que dsh puede hacer desde la terminal, puede hacerlo dentro de Harness.
@@ -92,7 +92,7 @@ git clone https://github.com/aconcepcion/harness-app ~/harness-app && make -C ~/
 
 **Verificación**
 ```sh
-/Applications/Harness.app/Contents/MacOS/Harness --version      # imprime 3.0.0
+/Applications/Harness.app/Contents/MacOS/Harness --version      # imprime 3.1.0
 /Applications/Harness.app/Contents/MacOS/Harness --check-env     # salida 0 = dsh encontrado; 1 = falta dsh (el informe explica por qué)
 open -a Harness                                                  # arranca; interfaz en http://127.0.0.1:3080 en ~5 s
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3080/  # 200 cuando está lista
@@ -111,6 +111,7 @@ defaults write com.arnoldoconcepcion.harness-app Workspace "$HOME/projects"
 defaults write com.arnoldoconcepcion.harness-app KeepServerRunning -bool NO
 defaults write com.arnoldoconcepcion.harness-app CheckForDshUpdates -bool YES
 defaults write com.arnoldoconcepcion.harness-app CheckForAppUpdates -bool YES
+defaults write com.arnoldoconcepcion.harness-app PreventSleepWhileRunning -bool NO
 open -a Harness "$HOME/projects"        # o: arrancar con una carpeta de trabajo
 ```
 
@@ -133,7 +134,24 @@ Agentes que contribuyan código: ver [`AGENTS.md`](AGENTS.md) para las convencio
 - **Guardia de navegación.** Cualquier cosa que no esté en `127.0.0.1` se abre en tu navegador por defecto.
 - **Arrastrar al Dock.** Arrastra una carpeta al icono (o `open -a Harness ~/proyecto`) para usarla como carpeta de trabajo.
 - **Perfiles.** Server ▸ Profile lista `~/.dsh/profiles/`; cambiar reinicia el servidor. Harness nunca inyecta un perfil propio.
-- **Update dsh… / Repair Shell Tools…** abren la Terminal ejecutando el comando exacto de abajo. Harness no puede saber cuándo termina la Terminal, así que solo te recuerda: Server ▸ Restart Server.
+- **Update dsh… / Repair Shell Tools…** abren la Terminal ejecutando el comando exacto de abajo, dirigido al prefijo de npm que posee el dsh que Harness encontró (así, si el primer `npm` de tu shell de inicio pertenece a otra instalación de Node, no aparece un segundo dsh que tape al original). Harness no puede saber cuándo termina la Terminal, así que solo te recuerda: Server ▸ Restart Server.
+- **Presets, skills y plugins.** dsh ▸ Install from Git URL… clona un repositorio que tú indicas e instala lo que marques, de forma visible en la Terminal; dsh ▸ Presets / Skills listan lo instalado. Ver [más abajo](#presets-skills-y-plugins).
+- **Mostrar / editar.** dsh ▸ Reveal dsh Home, Reveal Sessions, Edit Profile Config… (`~/.dsh/profiles/<perfil>/cordis.patch.yml`): los archivos en los que acaba cualquier usuario avanzado, a un clic.
+- **Prevent Sleep While Running** (menú Server, desactivado por defecto) mantiene una aserción de energía mientras el servidor está arriba, para ejecuciones nocturnas. Solo evita el reposo por inactividad: con la tapa cerrada el Mac se duerme igual, salvo que apliquen las reglas de macOS para modo cerrado. Se ve en `pmset -g assertions`.
+- **Los selectores de archivos funcionan.** Un `<input type=file>` dentro de la interfaz abre un panel nativo (un WKWebView necesita un delegado para eso; sin él, el botón no hace nada).
+
+## Presets, skills y plugins
+
+Desde que salió dsh, lo interesante ocurre *dentro* del harness: presets de agente "anclados" en dos fases, enrutadores en tiempo de ejecución, skills de suites cognitivas. Todos se instalan igual: copiar un directorio en `~/.dsh/.agent-presets/` (presets) o `~/.dsh/skills/` (skills), o `dsh plugin --profile web add <ruta>` (plugins); luego reiniciar dsh y elegir el preset en una sesión nueva. Harness lo convierte en un elemento de menú sin adueñarse de nada:
+
+1. **dsh ▸ Install from Git URL…** — pega la URL del repositorio. Harness ejecuta `git clone --depth 1` en `~/Library/Application Support/Harness.app/sources/<host>/<owner>/<repo>` (la única llamada de red de esta función; al arrancar no se ejecuta nada).
+2. Escanea el clon (cuatro niveles de profundidad, saltando `.git` y `node_modules`) buscando directorios con `preset.yml` (preset de agente), `SKILL.md` (skill), o `package.json` + `cordis.patch.yml` / una clave `dsh` / la palabra clave `dsh-plugin` (plugin), y muestra una casilla por hallazgo. Si no reconoce nada, lo dice y ofrece mostrar el clon y abrir su README, para que sigas las instrucciones del propio repositorio.
+3. **Ves el script exacto antes de que se ejecute nada** (`bash -ex`, cada comando se imprime). Los presets van a `$DSH_HOME/.agent-presets/<id>` (id = nombre del directorio en minúsculas; dsh exige `^[a-z0-9][a-z0-9-]*$`), los skills a `$DSH_HOME/skills/<nombre>`, los plugins vía `dsh plugin --profile <perfil actual> add <ruta>`. Lo que ya exista se renombra a `<nombre>.replaced-<marca de tiempo>`: nunca se borra.
+4. Server ▸ Restart Server y elige el preset en una sesión nueva.
+
+**dsh ▸ Presets** y **dsh ▸ Skills** listan lo instalado (`~/.dsh/.agent-presets`, `~/.dsh/skills`, más `~/.agents/skills`, que dsh también lee); elegir una entrada la muestra en el Finder.
+
+Harness no selecciona, revisa ni empaqueta ninguno de esos repositorios, y el proceso de la app nunca escribe en `~/.dsh`: lo hace el script, en una Terminal que estás mirando. Confías en el repositorio que pegas, exactamente igual que en una terminal.
 
 ## Actualizar dsh
 
@@ -153,6 +171,7 @@ Cmd-, o `defaults write com.arnoldoconcepcion.harness-app <Clave> <valor>`:
 | `Profile` | `web` | `dsh web` para `web`; si no, `dsh --profile <nombre>` |
 | `DshPath` | (auto) | Sustituye la búsqueda en el PATH del shell de inicio |
 | `KeepServerRunning` | `NO` | Dejar el servidor corriendo tras cerrar |
+| `PreventSleepWhileRunning` | `NO` | Mantener una aserción contra el reposo por inactividad mientras el servidor está arriba |
 | `CheckForDshUpdates` | `YES` | `npm view @deepseek-ai/dsh version` al arrancar |
 | `CheckForAppUpdates` | `YES` | Consulta de la última release en GitHub al arrancar |
 
@@ -160,7 +179,7 @@ Puerto/carpeta de trabajo/perfil/ruta de dsh se aplican en **Server ▸ Restart 
 
 ## Privacidad y red
 
-Harness habla exactamente con tres sitios: `127.0.0.1` (dsh), `registry.npmjs.org` vía `npm view` (comprobación de actualización de dsh) y `api.github.com` (su propia comprobación de actualización). Ambas comprobaciones son visibles en Ajustes y se pueden desactivar. Captura el entorno de tu shell de inicio una vez al arrancar (`$SHELL -ilc env`, con `HA_ENV_CAPTURE=1` definido para que tus archivos rc puedan saltarse trabajo lento) y le pasa ese entorno a dsh — no se envía nada a ninguna parte.
+Harness habla por sí mismo exactamente con tres sitios: `127.0.0.1` (dsh), `registry.npmjs.org` vía `npm view` (comprobación de actualización de dsh) y `api.github.com` (su propia comprobación de actualización). Ambas comprobaciones son visibles en Ajustes y se pueden desactivar. Uno más, solo cuando tú lo pides: **dsh ▸ Install from Git URL…** ejecuta `git clone` contra la URL que pegas — ese host, nada más, y solo cuando pulsas Fetch. Captura el entorno de tu shell de inicio una vez al arrancar (`$SHELL -ilc env`, con `HA_ENV_CAPTURE=1` definido para que tus archivos rc puedan saltarse trabajo lento) y le pasa ese entorno a dsh — no se envía nada a ninguna parte.
 
 ## Trampas que esta app conoce
 
@@ -172,8 +191,8 @@ Harness habla exactamente con tres sitios: `127.0.0.1` (dsh), `registry.npmjs.or
 
 ```sh
 make            # Harness.app universal en build/
-make test       # pruebas unitarias (descubrimiento del entorno, semver, ciclo de vida del servidor con un dsh falso)
-make smoke      # extremo a extremo: arranque en frío, conexión, mantener vivo, escalada a SIGKILL
+make test       # pruebas unitarias (descubrimiento del entorno, semver, ciclo de vida del servidor con un dsh falso, escaneo/script del instalador, guarda de reposo)
+make smoke      # extremo a extremo: arranque en frío, conexión, mantener vivo, escalada a SIGKILL, aserción anti-reposo
 make install    # copiar a /Applications (firma ad-hoc)
 ```
 Solo hacen falta las Command Line Tools. No hay descarga notarizada a propósito: una app compilada localmente no lleva la marca de cuarentena, y nada en un lanzador de 400 KB justifica pedirte que confíes en un binario.
@@ -193,7 +212,7 @@ Harness.app se publica bajo la **Licencia MIT** — una de las licencias de cód
 
 El texto completo está en [`LICENSE`](LICENSE). Las contribuciones se aceptan bajo la misma licencia — al abrir un pull request aceptas que tu contribución queda bajo MIT como el resto.
 
-Harness.app no tiene dependencias de terceros: solo enlaza con los frameworks del sistema de Apple (AppKit, WebKit, Foundation), así que no hay avisos de terceros que reproducir.
+Harness.app no tiene dependencias de terceros: solo enlaza con los frameworks del sistema de Apple (AppKit, WebKit, Foundation, IOKit), así que no hay avisos de terceros que reproducir.
 
 **Marcas.** "DeepSeek" y el logotipo de la ballena de DeepSeek son marcas de DeepSeek. Este proyecto no está afiliado ni respaldado, y no usa ninguna de las dos; el nombre "Harness" aquí se refiere a la categoría de software, no a ningún producto de DeepSeek. `dsh` es software de DeepSeek, publicado bajo su propia licencia (MIT en el momento de escribir esto), y no se distribuye con esta app.
 

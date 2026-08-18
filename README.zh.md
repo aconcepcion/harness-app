@@ -2,7 +2,7 @@
 
 # Harness.app
 
-**[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（`dsh`）的原生 macOS 启动器。运行*你自己*安装的 dsh，在真正的 Mac 窗口里，关窗即停。约 1200 行 Objective-C。没有 Electron，不内置 dsh 副本，没有托盘常驻进程。**
+**[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（`dsh`）的原生 macOS 启动器。运行*你自己*安装的 dsh，在真正的 Mac 窗口里，关窗即停。约 1600 行 Objective-C。没有 Electron，不内置 dsh 副本，没有托盘常驻进程。**
 
 双击 → 启动*你自己安装的* `dsh web` → 在原生窗口中显示官方界面 → 关闭窗口即停止服务。
 
@@ -44,7 +44,7 @@ Harness.app 有意在每一点上选择相反的立场：
 ## 为什么这些是好事（如果你不是 Mac 开发者）
 
 - **"运行你自己的 npm dsh"** —— dsh 由 npm（Node 的包管理器）安装。Harness 不带副本，它启动的是你机器上那一份。所以 DeepSeek 发新版时，你敲一条命令就用上了 —— Harness 自己什么都不用发布。你永远不用等中间人。
-- **"约 1200 行 Objective-C，没有 Electron"** —— Electron 应用为了画一个窗口要内置一整个 Chrome 浏览器（这就是它们 300–500 MB、吃内存的原因）。Harness 通过 Apple 自家的 AppKit 使用 macOS 内置的浏览器引擎。结果：不到 400 KB 的应用，一秒左右打开，原生手感，而且小到任何好奇的人都能读完*全部*代码 —— 没有任何地方能藏东西。Homebrew 甚至直接在你自己的 Mac 上从源码编译它。
+- **"约 1600 行 Objective-C，没有 Electron"** —— Electron 应用为了画一个窗口要内置一整个 Chrome 浏览器（这就是它们 300–500 MB、吃内存的原因）。Harness 通过 Apple 自家的 AppKit 使用 macOS 内置的浏览器引擎。结果：不到 400 KB 的应用，一秒左右打开，原生手感，而且小到任何好奇的人都能读完*全部*代码 —— 没有任何地方能藏东西。Homebrew 甚至直接在你自己的 Mac 上从源码编译它。
 - **"没有托盘、没有常驻"** —— 很多桌面封装在你关窗之后仍留在菜单栏里，服务继续跑。Harness 像一份文档：关掉窗口，它就没了，什么都不剩。（如果你*希望*服务在两次使用之间保持运行，有一个复选框 —— 默认关闭。）
 - **"两个明示、可关闭的版本检查"** —— 除了和你自己机器上的 dsh 通信，唯一的网络流量是到 npm 查一次 dsh 版本、到 GitHub 查一次 Harness 版本。两者都在设置里可见、可关闭。没有遥测，没有回传。
 - **"绝不限制 dsh"** —— 应用不会插在你和 dsh 的插件系统之间。你的 `~/.dsh`、你的 profile、你的 PATH。dsh 在终端里能做的一切，在 Harness 里同样能做。
@@ -92,7 +92,7 @@ git clone https://github.com/aconcepcion/harness-app ~/harness-app && make -C ~/
 
 **验证**
 ```sh
-/Applications/Harness.app/Contents/MacOS/Harness --version      # 输出 3.0.0
+/Applications/Harness.app/Contents/MacOS/Harness --version      # 输出 3.1.0
 /Applications/Harness.app/Contents/MacOS/Harness --check-env     # 退出码 0 = 找到 dsh；1 = 缺失（报告说明原因）
 open -a Harness                                                  # 启动；约 5 秒内界面在 http://127.0.0.1:3080
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3080/  # 就绪时为 200
@@ -111,6 +111,7 @@ defaults write com.arnoldoconcepcion.harness-app Workspace "$HOME/projects"
 defaults write com.arnoldoconcepcion.harness-app KeepServerRunning -bool NO
 defaults write com.arnoldoconcepcion.harness-app CheckForDshUpdates -bool YES
 defaults write com.arnoldoconcepcion.harness-app CheckForAppUpdates -bool YES
+defaults write com.arnoldoconcepcion.harness-app PreventSleepWhileRunning -bool NO
 open -a Harness "$HOME/projects"        # 或：带工作目录启动
 ```
 
@@ -133,7 +134,24 @@ open -a Harness "$HOME/projects"        # 或：带工作目录启动
 - **导航守卫。** 非 `127.0.0.1` 的链接一律在默认浏览器中打开。
 - **Dock 拖放。** 把文件夹拖到图标上（或 `open -a Harness ~/project`）即以其为工作目录。
 - **Profile。** Server ▸ Profile 列出 `~/.dsh/profiles/`；切换会重启服务。Harness 绝不注入自己的 profile。
-- **Update dsh… / Repair Shell Tools…** 打开 Terminal 运行下面这条准确的命令。Harness 无法得知 Terminal 何时完成，所以只会提醒你：Server ▸ Restart Server。
+- **Update dsh… / Repair Shell Tools…** 打开 Terminal 运行下面这条准确的命令，并且指向拥有 Harness 所找到的那份 dsh 的 npm 前缀（这样，如果登录 shell 里排在最前的 `npm` 属于另一个 Node 安装，也不会装出第二份、遮住原来的 dsh）。Harness 无法得知 Terminal 何时完成，所以只会提醒你：Server ▸ Restart Server。
+- **预设、技能、插件。** dsh ▸ Install from Git URL… 克隆你指定的仓库，把你勾选的项目安装进去，全程在 Terminal 里可见；dsh ▸ Presets / Skills 列出已安装的内容。见[下文](#预设技能与插件)。
+- **打开 / 编辑。** dsh ▸ Reveal dsh Home、Reveal Sessions、Edit Profile Config…（`~/.dsh/profiles/<profile>/cordis.patch.yml`）—— 重度用户迟早要打开的那几个文件，一步到位。
+- **Prevent Sleep While Running**（Server 菜单，默认关闭）在服务运行期间持有一个电源断言，适合过夜跑任务。只阻止闲置休眠 —— 合上盖子仍会休眠，除非 macOS 的合盖规则适用。可在 `pmset -g assertions` 中看到。
+- **文件选择器可用。** 界面里的 `<input type=file>` 会打开原生面板（WKWebView 需要一个代理方法才行；没有它，按钮点了没反应）。
+
+## 预设、技能与插件
+
+dsh 发布以来，有意思的工作都发生在 harness *内部*：两阶段"锚定"agent 预设、运行时路由器、认知套件技能。它们的安装方式一样 —— 把目录复制到 `~/.dsh/.agent-presets/`（预设）或 `~/.dsh/skills/`（技能），或 `dsh plugin --profile web add <path>`（插件）—— 然后重启 dsh，在新会话里选择该预设。Harness 把这变成一个菜单项，但不拥有其中任何一样：
+
+1. **dsh ▸ Install from Git URL…** —— 粘贴仓库 URL。Harness 运行 `git clone --depth 1` 到 `~/Library/Application Support/Harness.app/sources/<host>/<owner>/<repo>`（这是该功能唯一的网络访问；启动时什么都不跑）。
+2. 它扫描克隆结果（最深四层，跳过 `.git` 和 `node_modules`），寻找含有 `preset.yml`（agent 预设）、`SKILL.md`（技能）、或 `package.json` + `cordis.patch.yml` / `dsh` 键 / `dsh-plugin` 关键字（插件）的目录，每个发现对应一个复选框。什么都没认出来 → 如实告诉你，并提供打开克隆目录和 README 的按钮，你按仓库自己的说明来。
+3. **任何东西运行之前，你都会看到完整的脚本**（`bash -ex`，每条命令都会回显）。预设进 `$DSH_HOME/.agent-presets/<id>`（id = 目录名小写；dsh 要求 `^[a-z0-9][a-z0-9-]*$`），技能进 `$DSH_HOME/skills/<name>`，插件通过 `dsh plugin --profile <当前 profile> add <path>`。已存在的同名项会被改名为 `<name>.replaced-<时间戳>` —— 绝不删除。
+4. Server ▸ Restart Server，然后在新会话里选择该预设。
+
+**dsh ▸ Presets** 与 **dsh ▸ Skills** 列出已安装内容（`~/.dsh/.agent-presets`、`~/.dsh/skills`，以及 dsh 同样读取的 `~/.agents/skills`）；选择一项即在 Finder 中显示。
+
+Harness 不筛选、不审核、不内置任何这些仓库，应用进程本身也从不写入 `~/.dsh` —— 写入的是那段脚本，在你盯着看的 Terminal 里。你信任的是你粘贴的仓库，和在终端里做这件事一模一样。
 
 ## 更新 dsh
 
@@ -153,6 +171,7 @@ Cmd-, 或 `defaults write com.arnoldoconcepcion.harness-app <Key> <value>`：
 | `Profile` | `web` | `web` 用 `dsh web`，其他用 `dsh --profile <name>` |
 | `DshPath` | （自动） | 覆盖登录 shell PATH 查找 |
 | `KeepServerRunning` | `NO` | 关窗后保留服务 |
+| `PreventSleepWhileRunning` | `NO` | 服务运行期间持有闲置休眠断言 |
 | `CheckForDshUpdates` | `YES` | 启动时 `npm view @deepseek-ai/dsh version` |
 | `CheckForAppUpdates` | `YES` | 启动时查询 GitHub 最新 release |
 
@@ -160,7 +179,7 @@ Cmd-, 或 `defaults write com.arnoldoconcepcion.harness-app <Key> <value>`：
 
 ## 隐私与网络
 
-Harness 只与三处通信：`127.0.0.1`（dsh）、通过 `npm view` 访问 `registry.npmjs.org`（dsh 更新检查）、`api.github.com`（自身更新检查）。两项检查在设置中可见并可关闭。它在启动时捕获一次你的登录 shell 环境（`$SHELL -ilc env`，并设置 `HA_ENV_CAPTURE=1` 以便你的 rc 文件跳过耗时操作），然后把该环境交给 dsh —— 不会发送到任何地方。
+Harness 自己只与三处通信：`127.0.0.1`（dsh）、通过 `npm view` 访问 `registry.npmjs.org`（dsh 更新检查）、`api.github.com`（自身更新检查）。两项检查在设置中可见并可关闭。还有一处，仅在你要求时：**dsh ▸ Install from Git URL…** 对你粘贴的 URL 执行 `git clone` —— 只有那台主机，只在你点 Fetch 时。它在启动时捕获一次你的登录 shell 环境（`$SHELL -ilc env`，并设置 `HA_ENV_CAPTURE=1` 以便你的 rc 文件跳过耗时操作），然后把该环境交给 dsh —— 不会发送到任何地方。
 
 ## 这个应用知道的坑
 
@@ -172,8 +191,8 @@ Harness 只与三处通信：`127.0.0.1`（dsh）、通过 `npm view` 访问 `re
 
 ```sh
 make            # 在 build/ 生成通用二进制 Harness.app
-make test       # 单元测试（环境发现、semver、用假 dsh 测服务生命周期）
-make smoke      # 端到端：冷启动、接管、保持运行、SIGKILL 升级
+make test       # 单元测试（环境发现、semver、用假 dsh 测服务生命周期、安装器扫描/脚本、休眠守卫）
+make smoke      # 端到端：冷启动、接管、保持运行、SIGKILL 升级、防休眠断言
 make install    # 复制到 /Applications（ad-hoc 签名）
 ```
 只需要 Command Line Tools。有意不提供公证下载：本地编译的应用没有隔离标记，而一个 400 KB 的启动器也不值得让你去信任一个二进制。
@@ -193,7 +212,7 @@ Harness.app 以 **MIT 许可证**发布 —— 现存最宽松的开源许可证
 
 完整文本见 [`LICENSE`](LICENSE)。贡献以同一许可证接收 —— 提交 pull request 即表示你同意你的贡献与其余部分一样采用 MIT 许可。
 
-Harness.app 没有第三方依赖：它只链接 Apple 的系统框架（AppKit、WebKit、Foundation），因此没有需要转载的第三方声明。
+Harness.app 没有第三方依赖：它只链接 Apple 的系统框架（AppKit、WebKit、Foundation、IOKit），因此没有需要转载的第三方声明。
 
 **商标。** "DeepSeek" 及 DeepSeek 鲸鱼标志是 DeepSeek 的商标。本项目与其无关、未获其背书，也未使用二者；这里的 "Harness" 指软件类别，而非任何 DeepSeek 产品。`dsh` 是 DeepSeek 的软件，以其自身的许可证发布（撰写本文时为 MIT），并不随本应用分发。
 
