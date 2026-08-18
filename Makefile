@@ -2,12 +2,12 @@ APP      = Harness
 VERSION  = 3.0.0
 BUILD    = build
 APPDIR   = $(BUILD)/$(APP).app
-SRC      = src/main.m src/HAEnvironment.m src/HAServer.m src/HAUpdater.m src/HAPreferencesWindow.m
-LIBSRC   = src/HAEnvironment.m src/HAServer.m src/HAUpdater.m
+SRC      = src/main.m src/HAEnvironment.m src/HAServer.m src/HAUpdater.m src/HAPreferencesWindow.m src/HASleepGuard.m
+LIBSRC   = src/HAEnvironment.m src/HAServer.m src/HAUpdater.m src/HASleepGuard.m
 HDR      = $(wildcard src/*.h)
 ARCHS   ?= -arch arm64 -arch x86_64
 CFLAGS   = -fobjc-arc -O2 -Wall -Wextra -Wno-unused-parameter -mmacosx-version-min=13.0
-FW       = -framework Cocoa -framework WebKit
+FW       = -framework Cocoa -framework WebKit -framework IOKit
 TESTS    = $(patsubst tests/%.m,$(BUILD)/%,$(wildcard tests/test_*.m))
 
 .PHONY: all app install test smoke clean
@@ -41,7 +41,7 @@ $(BUILD)/fakedsh: tests/fakedsh.c | $(BUILD)
 	clang -O2 -o $@ tests/fakedsh.c
 
 $(BUILD)/test_%: tests/test_%.m $(LIBSRC) $(HDR) tests/HATest.h | $(BUILD)
-	clang $(CFLAGS) -Isrc -o $@ $< $(LIBSRC) -framework Foundation -framework AppKit
+	clang $(CFLAGS) -Isrc -o $@ $< $(LIBSRC) -framework Foundation -framework AppKit -framework IOKit
 
 test: $(TESTS) $(BUILD)/fakedsh
 	@rc=0; for t in $(TESTS); do FAKEDSH=$(abspath $(BUILD)/fakedsh) $$t || rc=1; done; exit $$rc
