@@ -92,7 +92,7 @@ git clone https://github.com/aconcepcion/harness-app ~/harness-app && make -C ~/
 
 **Verify**
 ```sh
-/Applications/Harness.app/Contents/MacOS/Harness --version      # prints 3.1.0
+/Applications/Harness.app/Contents/MacOS/Harness --version      # prints 3.1.1
 /Applications/Harness.app/Contents/MacOS/Harness --check-env     # exit 0 = dsh found; exit 1 = dsh missing (report shows why)
 open -a Harness                                                  # launches; UI on http://127.0.0.1:3080 within ~5 s
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3080/  # 200 when ready
@@ -136,7 +136,7 @@ Contributing agents: see [`AGENTS.md`](AGENTS.md) for build, test and code conve
 - **Profiles.** Server ▸ Profile lists `~/.dsh/profiles/`; switching restarts the server. Harness never injects a profile of its own.
 - **Update dsh… / Repair Shell Tools…** open Terminal running the exact command below, aimed at the npm prefix that owns the dsh Harness found (so a login shell whose first `npm` belongs to another Node install doesn't produce a second, shadowing dsh). Harness can't tell when Terminal is done, so it just reminds you: Server ▸ Restart Server.
 - **Presets, skills, plugins.** dsh ▸ Install from Git URL… clones a repository you name and installs what you tick, visibly in Terminal; dsh ▸ Presets / Skills list what is installed. See [below](#presets-skills-and-plugins).
-- **Reveal / edit.** dsh ▸ Reveal dsh Home, Reveal Sessions, Edit Profile Config… (`~/.dsh/profiles/<profile>/cordis.patch.yml`) — the files power users end up in anyway, one click away.
+- **Reveal / edit.** dsh ▸ Reveal dsh Home, Reveal Sessions, Edit Profile Config… (`~/.dsh/profiles/<profile>/cordis.patch.yml`, in your plain-text editor) — the files power users end up in anyway, one click away.
 - **Prevent Sleep While Running** (Server menu, off by default) holds a power assertion while the server is up, for overnight runs. Idle sleep only — a closed lid still sleeps unless macOS clamshell rules apply. Visible in `pmset -g assertions`.
 - **File choosers work.** `<input type=file>` inside the UI opens a native panel (a WKWebView needs a delegate for that; without one the button silently does nothing).
 

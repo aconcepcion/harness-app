@@ -61,6 +61,7 @@ int main(void) { @autoreleasepool {
     HA_ASSERT(![all containsString:@"tooling"], "root tooling package.json is not a plugin");
     HA_ASSERT(![all containsString:@"evil"] && ![all containsString:@"deep"], "node_modules/.git/deep skipped");
     HA_ASSERT(items[0].kind == HAInstallKindPreset && items[items.count - 1].kind == HAInstallKindPlugin, "ordered presets, skills, plugins");
+    HA_EQ_STR(items[0].ident, @"anchored-standard"); HA_EQ_STR(items[1].ident, @"combo-anchored"); HA_EQ_STR(items[2].ident, @"router-standard");   // sorted by id within a kind, not by source path
 
     // The script: bash -eu, one mkdir, move-aside (never delete), cp -R, dsh plugin add, closing hint.
     NSString *s = HAInstallScript(items, home, @"/opt/homebrew/bin/dsh", @"web", @"20260818-120000");

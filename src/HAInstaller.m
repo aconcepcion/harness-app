@@ -120,6 +120,8 @@ static void scanDir(NSString *dir, NSUInteger depth, NSString *dshHome, NSMutabl
 NSArray<HAInstallItem *> *HAScanInstallables(NSString *cloneDir, NSString *dshHome) {
     NSMutableArray *p = [NSMutableArray array], *s = [NSMutableArray array], *g = [NSMutableArray array];
     scanDir(cloneDir, 0, dshHome, p, s, g);
+    NSSortDescriptor *byId = [NSSortDescriptor sortDescriptorWithKey:@"ident" ascending:YES selector:@selector(caseInsensitiveCompare:)];
+    for (NSMutableArray *a in @[p, s, g]) [a sortUsingDescriptors:@[byId]];   // the user reads ids, not source paths
     return [[p arrayByAddingObjectsFromArray:s] arrayByAddingObjectsFromArray:g];
 }
 

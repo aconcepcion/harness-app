@@ -1,5 +1,5 @@
 APP      = Harness
-VERSION  = 3.1.0
+VERSION  = 3.1.1
 BUILD    = build
 APPDIR   = $(BUILD)/$(APP).app
 SRC      = src/main.m src/HAEnvironment.m src/HAServer.m src/HAUpdater.m src/HAPreferencesWindow.m src/HASleepGuard.m src/HAInstaller.m
@@ -7,7 +7,7 @@ LIBSRC   = src/HAEnvironment.m src/HAServer.m src/HAUpdater.m src/HASleepGuard.m
 HDR      = $(wildcard src/*.h)
 ARCHS   ?= -arch arm64 -arch x86_64
 CFLAGS   = -fobjc-arc -Os -Wl,-dead_strip -Wall -Wextra -Wno-unused-parameter -mmacosx-version-min=13.0
-FW       = -framework Cocoa -framework WebKit -framework IOKit
+FW       = -framework Cocoa -framework WebKit -framework IOKit -framework UniformTypeIdentifiers
 TESTS    = $(patsubst tests/%.m,$(BUILD)/%,$(wildcard tests/test_*.m))
 
 .PHONY: all app install test smoke clean

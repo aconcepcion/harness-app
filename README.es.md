@@ -92,7 +92,7 @@ git clone https://github.com/aconcepcion/harness-app ~/harness-app && make -C ~/
 
 **Verificación**
 ```sh
-/Applications/Harness.app/Contents/MacOS/Harness --version      # imprime 3.1.0
+/Applications/Harness.app/Contents/MacOS/Harness --version      # imprime 3.1.1
 /Applications/Harness.app/Contents/MacOS/Harness --check-env     # salida 0 = dsh encontrado; 1 = falta dsh (el informe explica por qué)
 open -a Harness                                                  # arranca; interfaz en http://127.0.0.1:3080 en ~5 s
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3080/  # 200 cuando está lista
@@ -136,7 +136,7 @@ Agentes que contribuyan código: ver [`AGENTS.md`](AGENTS.md) para las convencio
 - **Perfiles.** Server ▸ Profile lista `~/.dsh/profiles/`; cambiar reinicia el servidor. Harness nunca inyecta un perfil propio.
 - **Update dsh… / Repair Shell Tools…** abren la Terminal ejecutando el comando exacto de abajo, dirigido al prefijo de npm que posee el dsh que Harness encontró (así, si el primer `npm` de tu shell de inicio pertenece a otra instalación de Node, no aparece un segundo dsh que tape al original). Harness no puede saber cuándo termina la Terminal, así que solo te recuerda: Server ▸ Restart Server.
 - **Presets, skills y plugins.** dsh ▸ Install from Git URL… clona un repositorio que tú indicas e instala lo que marques, de forma visible en la Terminal; dsh ▸ Presets / Skills listan lo instalado. Ver [más abajo](#presets-skills-y-plugins).
-- **Mostrar / editar.** dsh ▸ Reveal dsh Home, Reveal Sessions, Edit Profile Config… (`~/.dsh/profiles/<perfil>/cordis.patch.yml`): los archivos en los que acaba cualquier usuario avanzado, a un clic.
+- **Mostrar / editar.** dsh ▸ Reveal dsh Home, Reveal Sessions, Edit Profile Config… (`~/.dsh/profiles/<perfil>/cordis.patch.yml`, en tu editor de texto plano): los archivos en los que acaba cualquier usuario avanzado, a un clic.
 - **Prevent Sleep While Running** (menú Server, desactivado por defecto) mantiene una aserción de energía mientras el servidor está arriba, para ejecuciones nocturnas. Solo evita el reposo por inactividad: con la tapa cerrada el Mac se duerme igual, salvo que apliquen las reglas de macOS para modo cerrado. Se ve en `pmset -g assertions`.
 - **Los selectores de archivos funcionan.** Un `<input type=file>` dentro de la interfaz abre un panel nativo (un WKWebView necesita un delegado para eso; sin él, el botón no hace nada).
 

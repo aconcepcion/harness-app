@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.1.1 — 2026-08-18
+- Edit Profile Config… opens `cordis.patch.yml` in your plain-text editor (what `open -t` does; TextEdit by default) instead of whatever app owns `.yml`, which can be a whole IDE; errors surface as a sheet
+- Reveal dsh Home / Reveal Sessions / Reveal Presets Folder / Reveal Skills Folder open that folder in Finder (entries in the Presets/Skills submenus are still selected inside their parent)
+- Install from Git URL lists finds sorted by id within each kind, matching what you read, not the source path
+- Fresh 3.1 menu screenshots
+
 ## 3.1.0 — 2026-08-18
 - dsh ▸ Install from Git URL…: clone a preset / skill / plugin repository, tick what to install, and run it visibly in Terminal (presets → `$DSH_HOME/.agent-presets`, skills → `$DSH_HOME/skills`, plugins → `dsh plugin add`); anything already there is moved aside, never deleted; the exact script is shown before it runs
 - dsh ▸ Presets / Skills submenus list what is installed (Reveal in Finder, Restart Server)

@@ -92,7 +92,7 @@ git clone https://github.com/aconcepcion/harness-app ~/harness-app && make -C ~/
 
 **验证**
 ```sh
-/Applications/Harness.app/Contents/MacOS/Harness --version      # 输出 3.1.0
+/Applications/Harness.app/Contents/MacOS/Harness --version      # 输出 3.1.1
 /Applications/Harness.app/Contents/MacOS/Harness --check-env     # 退出码 0 = 找到 dsh；1 = 缺失（报告说明原因）
 open -a Harness                                                  # 启动；约 5 秒内界面在 http://127.0.0.1:3080
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3080/  # 就绪时为 200
@@ -136,7 +136,7 @@ open -a Harness "$HOME/projects"        # 或：带工作目录启动
 - **Profile。** Server ▸ Profile 列出 `~/.dsh/profiles/`；切换会重启服务。Harness 绝不注入自己的 profile。
 - **Update dsh… / Repair Shell Tools…** 打开 Terminal 运行下面这条准确的命令，并且指向拥有 Harness 所找到的那份 dsh 的 npm 前缀（这样，如果登录 shell 里排在最前的 `npm` 属于另一个 Node 安装，也不会装出第二份、遮住原来的 dsh）。Harness 无法得知 Terminal 何时完成，所以只会提醒你：Server ▸ Restart Server。
 - **预设、技能、插件。** dsh ▸ Install from Git URL… 克隆你指定的仓库，把你勾选的项目安装进去，全程在 Terminal 里可见；dsh ▸ Presets / Skills 列出已安装的内容。见[下文](#预设技能与插件)。
-- **打开 / 编辑。** dsh ▸ Reveal dsh Home、Reveal Sessions、Edit Profile Config…（`~/.dsh/profiles/<profile>/cordis.patch.yml`）—— 重度用户迟早要打开的那几个文件，一步到位。
+- **打开 / 编辑。** dsh ▸ Reveal dsh Home、Reveal Sessions、Edit Profile Config…（在你的纯文本编辑器中打开 `~/.dsh/profiles/<profile>/cordis.patch.yml`）—— 重度用户迟早要打开的那几个文件，一步到位。
 - **Prevent Sleep While Running**（Server 菜单，默认关闭）在服务运行期间持有一个电源断言，适合过夜跑任务。只阻止闲置休眠 —— 合上盖子仍会休眠，除非 macOS 的合盖规则适用。可在 `pmset -g assertions` 中看到。
 - **文件选择器可用。** 界面里的 `<input type=file>` 会打开原生面板（WKWebView 需要一个代理方法才行；没有它，按钮点了没反应）。
 

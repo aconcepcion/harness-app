@@ -8,6 +8,7 @@
 #import "HASleepGuard.h"
 #import "HAInstaller.h"
 #import <sys/stat.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 static NSMenuItem *item(NSString *title, SEL action, NSString *key);
 
@@ -314,17 +315,18 @@ static NSMenuItem *item(NSString *title, SEL action, NSString *key);
 #pragma mark - dsh menu: reveal / edit / listings (nothing here writes)
 
 - (NSString *)dshHome { return HADshHome(self.env.shellEnvironment); }
-- (void)revealPath:(NSString *)path {
-    if (![[NSFileManager defaultManager] fileExistsAtPath:path]) {
-        [self presentSheetTitle:@"Not there yet" detail:[NSString stringWithFormat:@"%@ does not exist. dsh creates it on first use.", [path stringByAbbreviatingWithTildeInPath]] buttons:@[@"OK"] handler:nil];
-        return;
-    }
-    [[NSWorkspace sharedWorkspace] selectFile:path inFileViewerRootedAtPath:@""];
+// Folders open as a Finder window at that folder; individual entries are selected inside their parent.
+- (BOOL)pathExistsOrExplain:(NSString *)path {
+    if ([[NSFileManager defaultManager] fileExistsAtPath:path]) return YES;
+    [self presentSheetTitle:@"Not there yet" detail:[NSString stringWithFormat:@"%@ does not exist. dsh creates it on first use.", [path stringByAbbreviatingWithTildeInPath]] buttons:@[@"OK"] handler:nil];
+    return NO;
 }
-- (void)revealDshHome:(id)sender { [self revealPath:[self dshHome]]; }
-- (void)revealSessions:(id)sender { [self revealPath:[[self dshHome] stringByAppendingPathComponent:@"sessions"]]; }
-- (void)revealPresetsFolder:(id)sender { [self revealPath:[[self dshHome] stringByAppendingPathComponent:@".agent-presets"]]; }
-- (void)revealSkillsFolder:(id)sender { [self revealPath:[[self dshHome] stringByAppendingPathComponent:@"skills"]]; }
+- (void)openFolder:(NSString *)path { if ([self pathExistsOrExplain:path]) [[NSWorkspace sharedWorkspace] selectFile:nil inFileViewerRootedAtPath:path]; }
+- (void)revealPath:(NSString *)path { if ([self pathExistsOrExplain:path]) [[NSWorkspace sharedWorkspace] selectFile:path inFileViewerRootedAtPath:@""]; }
+- (void)revealDshHome:(id)sender { [self openFolder:[self dshHome]]; }
+- (void)revealSessions:(id)sender { [self openFolder:[[self dshHome] stringByAppendingPathComponent:@"sessions"]]; }
+- (void)revealPresetsFolder:(id)sender { [self openFolder:[[self dshHome] stringByAppendingPathComponent:@".agent-presets"]]; }
+- (void)revealSkillsFolder:(id)sender { [self openFolder:[[self dshHome] stringByAppendingPathComponent:@"skills"]]; }
 - (void)revealMenuItemPath:(NSMenuItem *)sender { [self revealPath:sender.representedObject]; }
 - (void)editProfileConfig:(id)sender {
     NSString *profile = [[NSUserDefaults standardUserDefaults] stringForKey:HAPrefProfile] ?: HADefaultProfile;
@@ -334,11 +336,13 @@ static NSMenuItem *item(NSString *title, SEL action, NSString *key);
                         buttons:@[@"Restart Server", @"OK"] handler:^(NSInteger i) { if (i == 0) [self restartServer:nil]; }];
         return;
     }
-    NSURL *u = [NSURL fileURLWithPath:file];
-    if (![[NSWorkspace sharedWorkspace] openURL:u]) {
-        NSURL *textEdit = [[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:@"com.apple.TextEdit"];
-        if (textEdit) [[NSWorkspace sharedWorkspace] openURLs:@[u] withApplicationAtURL:textEdit configuration:[NSWorkspaceOpenConfiguration configuration] completionHandler:nil];
-    }
+    // Open with the user's plain-text editor (what `open -t` does), not with whatever owns ".yml" — that can be a whole IDE.
+    NSWorkspace *ws = [NSWorkspace sharedWorkspace];
+    NSURL *editor = [ws URLForApplicationToOpenContentType:UTTypePlainText] ?: [ws URLForApplicationWithBundleIdentifier:@"com.apple.TextEdit"];
+    if (!editor) { [ws openURL:[NSURL fileURLWithPath:file]]; return; }
+    [ws openURLs:@[[NSURL fileURLWithPath:file]] withApplicationAtURL:editor configuration:[NSWorkspaceOpenConfiguration configuration] completionHandler:^(NSRunningApplication *app, NSError *err) {
+        if (err) dispatch_async(dispatch_get_main_queue(), ^{ [self presentSheetTitle:@"Could not open the file" detail:[NSString stringWithFormat:@"%@\n\n%@", file, err.localizedDescription] buttons:@[@"Reveal in Finder", @"OK"] handler:^(NSInteger i) { if (i == 0) [self revealPath:file]; }]; });
+    }];
 }
 - (void)fillListMenu:(NSMenu *)menu dirs:(NSArray<NSString *> *)dirs revealTitle:(NSString *)revealTitle revealAction:(SEL)revealAction folder:(NSString *)folder {
     [menu removeAllItems];
