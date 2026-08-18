@@ -352,7 +352,108 @@ static NSMenuItem *item(NSString *title, SEL action, NSString *key);
     [menu addItem:[NSMenuItem separatorItem]];
     [menu addItem:item(@"Restart Server", @selector(restartServer:), @"")];
 }
-- (void)installFromGitURL:(id)sender {}   // Task 6
+
+#pragma mark - Install from Git URL (clone → detect → show the exact script → run it visibly in Terminal)
+
+- (void)installFromGitURL:(id)sender {
+    if (self.installing) { [self setNotice:@"an install is already running" forKey:@"install"]; return; }
+    NSAlert *a = [NSAlert new];
+    a.messageText = @"Install a dsh preset, skill or plugin from Git";
+    a.informativeText = @"Paste the repository URL. Harness clones it into ~/Library/Application Support/Harness.app/sources, shows what it found, and installs only what you tick — visibly, in Terminal. Nothing is curated or bundled: you are trusting the repository you paste.";
+    NSTextField *f = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 440, 24)]; f.placeholderString = @"https://github.com/owner/repo"; a.accessoryView = f;
+    [a addButtonWithTitle:@"Fetch"]; [a addButtonWithTitle:@"Cancel"];
+    a.window.initialFirstResponder = f;
+    [a beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse r) {
+        if (r != NSAlertFirstButtonReturn) return;
+        [self cloneAndScan:f.stringValue];
+    }];
+}
+
+- (void)cloneAndScan:(NSString *)url {
+    url = [url stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+    NSString *target = HAInstallCloneTargetForURL(url, HASourcesRoot());
+    if (!target) { [self presentSheetTitle:@"That doesn't look like a Git repository URL" detail:@"Use https://host/owner/repo, git@host:owner/repo.git or ssh://host/owner/repo." buttons:@[@"OK"] handler:nil]; return; }
+    NSString *git = HAFindExecutable(@"git", self.env.shellEnvironment[@"PATH"]);
+    if (!git && [[NSFileManager defaultManager] isExecutableFileAtPath:@"/usr/bin/git"]) git = @"/usr/bin/git";
+    if (!git) { [self presentSheetTitle:@"git was not found" detail:@"Install the Xcode Command Line Tools:  xcode-select --install" buttons:@[@"OK"] handler:nil]; return; }
+    NSString *cmd = [NSString stringWithFormat:@"%@ clone --depth 1 --recurse-submodules --shallow-submodules --quiet %@ %@ 2>&1", HAShellQuote(git), HAShellQuote(url), HAShellQuote(target)];
+    self.installing = YES; [self setNotice:[NSString stringWithFormat:@"cloning %@…", url] forKey:@"install"];
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        NSFileManager *fm = [NSFileManager defaultManager];
+        [fm createDirectoryAtPath:target.stringByDeletingLastPathComponent withIntermediateDirectories:YES attributes:nil error:nil];
+        [fm removeItemAtPath:target error:nil];   // a cache, not user data: always fetch fresh
+        NSMutableDictionary *env = [self.env.shellEnvironment mutableCopy]; env[@"GIT_TERMINAL_PROMPT"] = @"0";   // never prompt for credentials
+        int status = -1;
+        NSString *out = HARunCommandOutput(@"/bin/sh", @[@"-c", cmd], env, 120, &status);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.installing = NO; [self setNotice:nil forKey:@"install"];
+            if (status != 0) {
+                NSString *why = out.length ? out : (status == -1 ? @"git did not finish within 120 s (or it needs credentials — Harness never prompts for them)." : [NSString stringWithFormat:@"exit status %d", status]);
+                [self presentSheetTitle:@"git clone failed" detail:[NSString stringWithFormat:@"%@\n\n%@", why, cmd] buttons:@[@"Copy Command", @"OK"] handler:^(NSInteger i) {
+                    if (i == 0) { [[NSPasteboard generalPasteboard] clearContents]; [[NSPasteboard generalPasteboard] setString:cmd forType:NSPasteboardTypeString]; }
+                }];
+                return;
+            }
+            [self presentInstallChoicesFor:target];
+        });
+    });
+}
+
+- (void)presentInstallChoicesFor:(NSString *)clone {
+    NSArray<HAInstallItem *> *items = HAScanInstallables(clone, [self dshHome]);
+    NSString *readme = nil;
+    for (NSString *n in @[@"README.md", @"readme.md", @"README", @"README.zh-CN.md", @"README.zh.md"])
+        if ([[NSFileManager defaultManager] fileExistsAtPath:[clone stringByAppendingPathComponent:n]]) { readme = [clone stringByAppendingPathComponent:n]; break; }
+    if (items.count == 0) {
+        [self presentSheetTitle:@"No presets, skills or plugins recognised"
+                         detail:@"Harness looks for directories holding preset.yml (agent presets), SKILL.md (skills), or package.json plus cordis.patch.yml (plugins), up to four levels deep. This repository has none, so follow its own instructions."
+                        buttons:@[@"Reveal Clone", readme ? @"Open README" : @"OK"] handler:^(NSInteger i) {
+            if (i == 0) [[NSWorkspace sharedWorkspace] selectFile:clone inFileViewerRootedAtPath:@""];
+            else if (readme) [[NSWorkspace sharedWorkspace] openURL:[NSURL fileURLWithPath:readme]];
+        }];
+        return;
+    }
+    NSAlert *a = [NSAlert new];
+    a.messageText = [NSString stringWithFormat:@"Found in %@", clone.lastPathComponent];
+    a.informativeText = @"Tick what to install. Presets go to $DSH_HOME/.agent-presets, skills to $DSH_HOME/skills; plugins run `dsh plugin add`. Anything already there is moved aside, never deleted. You will see the exact script before it runs.";
+    NSStackView *stack = [NSStackView stackViewWithViews:@[]]; stack.orientation = NSUserInterfaceLayoutOrientationVertical; stack.alignment = NSLayoutAttributeLeading; stack.spacing = 4;
+    NSMutableArray<NSButton *> *boxes = [NSMutableArray array];
+    for (HAInstallItem *it in items) { NSButton *b = [NSButton checkboxWithTitle:it.label target:nil action:nil]; b.state = NSControlStateValueOn; [stack addArrangedSubview:b]; [boxes addObject:b]; }
+    stack.frame = NSMakeRect(0, 0, 560, MAX(24, 22 * (CGFloat)items.count)); a.accessoryView = stack;
+    [a addButtonWithTitle:@"Continue"]; [a addButtonWithTitle:@"Reveal Clone"]; [a addButtonWithTitle:@"Cancel"];
+    [a beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse r) {
+        if (r == NSAlertSecondButtonReturn) { [[NSWorkspace sharedWorkspace] selectFile:clone inFileViewerRootedAtPath:@""]; return; }
+        if (r != NSAlertFirstButtonReturn) return;
+        NSMutableArray *chosen = [NSMutableArray array];
+        for (NSUInteger i = 0; i < items.count; i++) if (boxes[i].state == NSControlStateValueOn) [chosen addObject:items[i]];
+        if (chosen.count) [self confirmAndRunInstall:chosen];
+    }];
+}
+
+- (void)confirmAndRunInstall:(NSArray<HAInstallItem *> *)items {
+    NSDateFormatter *df = [NSDateFormatter new]; df.dateFormat = @"yyyyMMdd-HHmmss"; NSString *stamp = [df stringFromDate:[NSDate date]];
+    NSString *profile = [[NSUserDefaults standardUserDefaults] stringForKey:HAPrefProfile] ?: HADefaultProfile;
+    NSString *script = HAInstallScript(items, [self dshHome], self.env.dshPath, profile, stamp);
+    NSString *file = [HASourcesRoot() stringByAppendingFormat:@"/install-%@.sh", stamp];
+    [[NSFileManager defaultManager] createDirectoryAtPath:HASourcesRoot() withIntermediateDirectories:YES attributes:nil error:nil];
+    [script writeToFile:file atomically:YES encoding:NSUTF8StringEncoding error:nil];
+    chmod(file.fileSystemRepresentation, 0700);
+    NSAlert *a = [NSAlert new];
+    a.messageText = @"This is exactly what will run in Terminal";
+    a.informativeText = [NSString stringWithFormat:@"Saved as %@. Terminal runs it with bash -ex, echoing every command; it stops at the first error.", [file stringByAbbreviatingWithTildeInPath]];
+    NSScrollView *sv = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, 600, 220)];
+    NSTextView *tv = [[NSTextView alloc] initWithFrame:sv.bounds]; tv.string = script; tv.editable = NO; tv.font = [NSFont monospacedSystemFontOfSize:11 weight:NSFontWeightRegular];
+    tv.autoresizingMask = NSViewWidthSizable; tv.horizontallyResizable = NO; tv.textContainer.widthTracksTextView = YES;
+    sv.documentView = tv; sv.hasVerticalScroller = YES; sv.borderType = NSBezelBorder; a.accessoryView = sv;
+    [a addButtonWithTitle:@"Install in Terminal"]; [a addButtonWithTitle:@"Copy Script"]; [a addButtonWithTitle:@"Cancel"];
+    [a beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse r) {
+        if (r == NSAlertSecondButtonReturn) { [[NSPasteboard generalPasteboard] clearContents]; [[NSPasteboard generalPasteboard] setString:script forType:NSPasteboardTypeString]; return; }
+        if (r != NSAlertFirstButtonReturn) return;
+        NSError *err = nil;
+        if (![HAUpdater runInTerminal:[@"bash -ex " stringByAppendingString:HAShellQuote(file)] error:&err]) { [self presentSheetTitle:@"Could not open Terminal" detail:err.localizedDescription buttons:@[@"OK"] handler:nil]; return; }
+        [self presentSheetTitle:@"Installing in Terminal…" detail:@"Every command is echoed there. When it finishes, choose Server ▸ Restart Server, then pick the preset (or use the skill) in a new session." buttons:@[@"OK"] handler:nil];
+    }];
+}
 
 - (void)showPreferences:(id)sender {
     if (!self.preferencesController) {

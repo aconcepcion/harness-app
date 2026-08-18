@@ -69,6 +69,23 @@ static BOOL isPluginDir(NSString *dir) {
     return [kw containsObject:@"dsh-plugin"] || [kw containsObject:@"cordis-plugin"];
 }
 
+// dsh's id is the directory name. When that name is generic ("preset/", "mode/"…) fall back to the
+// display name in preset.yml ("Anchored Standard (experimental)" → anchored-standard).
+static NSString *presetIDForDir(NSString *dir) {
+    NSString *fromDir = HAPresetIDFromName(dir.lastPathComponent);
+    if (![@[@"preset", @"presets", @"mode", @"default", @"main", @"src", @"agent-preset"] containsObject:fromDir]) return fromDir;
+    NSString *yml = [NSString stringWithContentsOfFile:[dir stringByAppendingPathComponent:@"preset.yml"] encoding:NSUTF8StringEncoding error:nil] ?: @"";
+    for (NSString *line in [yml componentsSeparatedByString:@"\n"]) {
+        if (![line hasPrefix:@"name:"]) continue;
+        NSString *v = [[line substringFromIndex:5] stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet];
+        v = [v stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"\"'"]];
+        NSRange paren = [v rangeOfString:@"("]; if (paren.location != NSNotFound) v = [v substringToIndex:paren.location];
+        NSString *fromName = HAPresetIDFromName(v);
+        if (![fromName isEqualToString:@"preset"]) return fromName;
+    }
+    return fromDir;
+}
+
 static HAInstallItem *makeItem(HAInstallKind kind, NSString *dir, NSString *ident, NSString *target) {
     HAInstallItem *it = [HAInstallItem new]; it.kind = kind; it.sourceDir = dir; it.ident = ident; it.targetPath = target;
     it.replacesExisting = target && [[NSFileManager defaultManager] fileExistsAtPath:target];
@@ -78,7 +95,7 @@ static HAInstallItem *makeItem(HAInstallKind kind, NSString *dir, NSString *iden
 static void scanDir(NSString *dir, NSUInteger depth, NSString *dshHome, NSMutableArray *presets, NSMutableArray *skills, NSMutableArray *plugins) {
     NSFileManager *fm = [NSFileManager defaultManager];
     if ([fm fileExistsAtPath:[dir stringByAppendingPathComponent:@"preset.yml"]]) {   // a preset dir is a leaf
-        NSString *ident = HAPresetIDFromName(dir.lastPathComponent);
+        NSString *ident = presetIDForDir(dir);
         [presets addObject:makeItem(HAInstallKindPreset, dir, ident, [[dshHome stringByAppendingPathComponent:@".agent-presets"] stringByAppendingPathComponent:ident])];
         return;
     }

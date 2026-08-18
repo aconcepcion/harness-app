@@ -37,6 +37,7 @@ int main(void) { @autoreleasepool {
     mkfile([clone stringByAppendingPathComponent:@"preset/router-standard/preset.yml"], @"name: Router");
     mkfile([clone stringByAppendingPathComponent:@"preset/router-standard/agent.cordis.yml"], @"[]");
     mkfile([clone stringByAppendingPathComponent:@"Combo_Anchored/preset.yml"], @"name: Combo");
+    mkfile([clone stringByAppendingPathComponent:@"base/preset/preset.yml"], @"name: \"Anchored Standard (experimental)\"\ndescription: x\n");   // generic dir name → id from name:
     mkfile([clone stringByAppendingPathComponent:@"j-space/SKILL.md"], @"# j-space");
     mkfile([clone stringByAppendingPathComponent:@"j-space/modules/a.md"], @"x");
     mkfile([clone stringByAppendingPathComponent:@"injector/package.json"], @"{\"name\":\"dsh-super-injector\"}");
@@ -47,12 +48,13 @@ int main(void) { @autoreleasepool {
     mkfile([clone stringByAppendingPathComponent:@"a/b/c/d/e/deep/preset.yml"], @"too deep");
     mkfile([home stringByAppendingPathComponent:@".agent-presets/router-standard/preset.yml"], @"existing");
     NSArray<HAInstallItem *> *items = HAScanInstallables(clone, home);
-    HA_ASSERT(items.count == 5, "5 items found, got %lu", (unsigned long)items.count);
+    HA_ASSERT(items.count == 6, "6 items found, got %lu", (unsigned long)items.count);
     NSMutableArray *labels = [NSMutableArray array]; for (HAInstallItem *i in items) [labels addObject:i.label];
     NSString *all = [labels componentsJoinedByString:@"\n"];
     HA_ASSERT([all containsString:@"preset router-standard → "], "router-standard preset: %s", all.UTF8String);
     HA_ASSERT([all containsString:@"(replaces existing)"], "existing preset flagged");
     HA_ASSERT([all containsString:@"preset combo-anchored → "], "id sanitised");
+    HA_ASSERT([all containsString:@"preset anchored-standard → "], "generic dir name 'preset' → id from name: field, parenthetical dropped: %s", all.UTF8String);
     HA_ASSERT([all containsString:@"skill j-space → "], "skill found");
     HA_ASSERT([all containsString:@"plugin dsh-super-injector"], "plugin by cordis.patch.yml");
     HA_ASSERT([all containsString:@"plugin x"], "plugin by keyword");
