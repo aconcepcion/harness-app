@@ -9,6 +9,8 @@
 #import "HAInstaller.h"
 #import <sys/stat.h>
 
+static NSMenuItem *item(NSString *title, SEL action, NSString *key);
+
 @interface AppDelegate : NSObject <NSApplicationDelegate, NSWindowDelegate, WKUIDelegate, WKNavigationDelegate, HAServerDelegate, NSMenuDelegate>
 @property (strong) NSWindow *window;
 @property (strong) WKWebView *webView;
@@ -18,7 +20,8 @@
 @property (strong) HASleepGuard *sleepGuard;
 @property (copy) NSString *launchWorkspace;          // Dock drop / open-with, overrides preference for this launch
 @property (strong) NSMutableDictionary<NSString *, NSString *> *notices;
-@property (strong) NSMenu *profileMenu;
+@property (strong) NSMenu *profileMenu, *presetsMenu, *skillsMenu;
+@property BOOL installing;
 @property (strong) NSWindowController *preferencesController;   // Task 6
 @property BOOL updateChecksRan;
 @end
@@ -308,6 +311,49 @@
 }
 - (void)updateDsh:(id)sender { [self runInstallCommandWithTitle:@"Updating dsh in Terminal…"]; }
 - (void)repairShellTools:(id)sender { [self runInstallCommandWithTitle:@"Repairing dsh in Terminal…"]; }
+#pragma mark - dsh menu: reveal / edit / listings (nothing here writes)
+
+- (NSString *)dshHome { return HADshHome(self.env.shellEnvironment); }
+- (void)revealPath:(NSString *)path {
+    if (![[NSFileManager defaultManager] fileExistsAtPath:path]) {
+        [self presentSheetTitle:@"Not there yet" detail:[NSString stringWithFormat:@"%@ does not exist. dsh creates it on first use.", [path stringByAbbreviatingWithTildeInPath]] buttons:@[@"OK"] handler:nil];
+        return;
+    }
+    [[NSWorkspace sharedWorkspace] selectFile:path inFileViewerRootedAtPath:@""];
+}
+- (void)revealDshHome:(id)sender { [self revealPath:[self dshHome]]; }
+- (void)revealSessions:(id)sender { [self revealPath:[[self dshHome] stringByAppendingPathComponent:@"sessions"]]; }
+- (void)revealPresetsFolder:(id)sender { [self revealPath:[[self dshHome] stringByAppendingPathComponent:@".agent-presets"]]; }
+- (void)revealSkillsFolder:(id)sender { [self revealPath:[[self dshHome] stringByAppendingPathComponent:@"skills"]]; }
+- (void)revealMenuItemPath:(NSMenuItem *)sender { [self revealPath:sender.representedObject]; }
+- (void)editProfileConfig:(id)sender {
+    NSString *profile = [[NSUserDefaults standardUserDefaults] stringForKey:HAPrefProfile] ?: HADefaultProfile;
+    NSString *file = [[[self dshHome] stringByAppendingPathComponent:[@"profiles/" stringByAppendingString:profile]] stringByAppendingPathComponent:@"cordis.patch.yml"];
+    if (![[NSFileManager defaultManager] fileExistsAtPath:file]) {
+        [self presentSheetTitle:@"No profile config yet" detail:[NSString stringWithFormat:@"%@ does not exist. dsh writes it the first time the “%@” profile boots.", [file stringByAbbreviatingWithTildeInPath], profile]
+                        buttons:@[@"Restart Server", @"OK"] handler:^(NSInteger i) { if (i == 0) [self restartServer:nil]; }];
+        return;
+    }
+    NSURL *u = [NSURL fileURLWithPath:file];
+    if (![[NSWorkspace sharedWorkspace] openURL:u]) {
+        NSURL *textEdit = [[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:@"com.apple.TextEdit"];
+        if (textEdit) [[NSWorkspace sharedWorkspace] openURLs:@[u] withApplicationAtURL:textEdit configuration:[NSWorkspaceOpenConfiguration configuration] completionHandler:nil];
+    }
+}
+- (void)fillListMenu:(NSMenu *)menu dirs:(NSArray<NSString *> *)dirs revealTitle:(NSString *)revealTitle revealAction:(SEL)revealAction folder:(NSString *)folder {
+    [menu removeAllItems];
+    [menu addItem:item(revealTitle, revealAction, @"")];
+    [menu addItem:[NSMenuItem separatorItem]];
+    if (dirs.count == 0) { NSMenuItem *none = item(@"(none installed)", NULL, @""); none.enabled = NO; [menu addItem:none]; }
+    for (NSString *d in dirs) {
+        NSString *title = [d hasPrefix:folder] ? d.lastPathComponent : [NSString stringWithFormat:@"%@  (~/.agents)", d.lastPathComponent];
+        NSMenuItem *it = item(title, @selector(revealMenuItemPath:), @""); it.representedObject = d; [menu addItem:it];
+    }
+    [menu addItem:[NSMenuItem separatorItem]];
+    [menu addItem:item(@"Restart Server", @selector(restartServer:), @"")];
+}
+- (void)installFromGitURL:(id)sender {}   // Task 6
+
 - (void)showPreferences:(id)sender {
     if (!self.preferencesController) {
         __weak typeof(self) weakSelf = self;
@@ -331,6 +377,8 @@
 }
 
 - (void)menuNeedsUpdate:(NSMenu *)menu {
+    if (menu == self.presetsMenu) { [self fillListMenu:menu dirs:HAInstalledPresetDirs([self dshHome]) revealTitle:@"Reveal Presets Folder" revealAction:@selector(revealPresetsFolder:) folder:[[self dshHome] stringByAppendingPathComponent:@".agent-presets"]]; return; }
+    if (menu == self.skillsMenu)  { [self fillListMenu:menu dirs:HAInstalledSkillDirs([self dshHome])  revealTitle:@"Reveal Skills Folder"  revealAction:@selector(revealSkillsFolder:)  folder:[[self dshHome] stringByAppendingPathComponent:@"skills"]]; return; }
     if (menu != self.profileMenu) return;
     [menu removeAllItems];
     NSString *current = [[NSUserDefaults standardUserDefaults] stringForKey:HAPrefProfile] ?: HADefaultProfile;
@@ -421,6 +469,14 @@ static NSMenu *buildMenu(AppDelegate *d) {
     NSMenu *dsh = [[NSMenu alloc] initWithTitle:@"dsh"];
     [dsh addItem:item(@"Update dsh…", @selector(updateDsh:), @"")];
     [dsh addItem:item(@"Check for dsh Updates Now", @selector(checkDshUpdatesNow:), @"")];
+    [dsh addItem:[NSMenuItem separatorItem]];
+    [dsh addItem:item(@"Install from Git URL…", @selector(installFromGitURL:), @"")];
+    NSMenuItem *presetsItem = item(@"Presets", NULL, @""); d.presetsMenu = [[NSMenu alloc] initWithTitle:@"Presets"]; d.presetsMenu.delegate = d; presetsItem.submenu = d.presetsMenu; [dsh addItem:presetsItem];
+    NSMenuItem *skillsItem = item(@"Skills", NULL, @""); d.skillsMenu = [[NSMenu alloc] initWithTitle:@"Skills"]; d.skillsMenu.delegate = d; skillsItem.submenu = d.skillsMenu; [dsh addItem:skillsItem];
+    [dsh addItem:[NSMenuItem separatorItem]];
+    [dsh addItem:item(@"Reveal dsh Home", @selector(revealDshHome:), @"")];
+    [dsh addItem:item(@"Reveal Sessions", @selector(revealSessions:), @"")];
+    [dsh addItem:item(@"Edit Profile Config…", @selector(editProfileConfig:), @"")];
     [dsh addItem:[NSMenuItem separatorItem]];
     [dsh addItem:item(@"Repair Shell Tools…", @selector(repairShellTools:), @"")];
     dshItem.submenu = dsh;
